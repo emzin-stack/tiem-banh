@@ -622,7 +622,7 @@ const MenuPage = ({ activeCat, setActiveCat, addToCart, setPage, setViewProduct 
 };
 
 // ─── PRODUCT DETAIL ────────────────────────────────────────────────────────────
-const ProductPage = ({ product, addToCart, setPage }) => {
+const ProductPage = ({ product, addToCart, setPage, setCart }) => {
   const [qty, setQty] = useState(1);
   const [selSize, setSelSize] = useState("16cm");
   const [selFlavor, setSelFlavor] = useState("Vanilla");
@@ -699,7 +699,10 @@ const ProductPage = ({ product, addToCart, setPage }) => {
             </div>
           </div>
 
-          <PillBtn onClick={() => { for (let i = 0; i < qty; i++) addToCart(product); setPage("menu"); }}>🛒 Thêm vào giỏ hàng</PillBtn>
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+            <PillBtn onClick={() => { for (let i = 0; i < qty; i++) addToCart(product); }}>🛒 Thêm vào giỏ hàng</PillBtn>
+            <PillBtn variant="success" onClick={() => { setCart([{ ...product, qty }]); setPage("checkout"); }} style={{ background: `linear-gradient(135deg, #D4639A, #8B3A6B)`, boxShadow: "0 4px 16px rgba(139,58,107,0.35)" }}>⚡ Mua ngay</PillBtn>
+          </div>
 
           {/* Trust */}
           <div style={{ display: "flex", gap: 20, marginTop: 24, paddingTop: 24, borderTop: `1px solid ${C.pinkMid}` }}>
@@ -1880,7 +1883,7 @@ export default function App() {
         <Footer setPage={setPage} />
       </>}
       {page === "menu" && <MenuPage activeCat={activeCat} setActiveCat={setActiveCat} addToCart={addToCart} setPage={setPage} setViewProduct={setViewProduct} />}
-      {page === "product" && <ProductPage product={viewProduct} addToCart={addToCart} setPage={setPage} />}
+      {page === "product" && <ProductPage product={viewProduct} addToCart={addToCart} setPage={setPage} setCart={setCart} />}
       {page === "about" && <AboutPage />}
       {page === "contact" && <ContactPage />}
       {page === "guide" && <div style={{ minHeight: "100vh", paddingTop: 80, background: C.cream }}><div style={{ background: C.deep, padding: "40px 40px", textAlign: "center" }}><h1 style={{ fontFamily: "'Playfair Display', serif", color: "white", fontSize: 40, margin: "0 0 8px" }}>Hướng Dẫn Đặt Bánh</h1><p style={{ color: C.textLightSoft, fontSize: 15, margin: 0 }}>4 bước đơn giản để có chiếc bánh hoàn hảo</p></div><HowToOrderSection /></div>}
