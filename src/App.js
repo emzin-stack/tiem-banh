@@ -1,6 +1,17 @@
 import { useState, useEffect, useRef } from "react";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
+// ─── RESPONSIVE HOOK ────────────────────────────────────────────────────────────
+const useIsMobile = (bp = 768) => {
+  const [m, setM] = useState(typeof window !== 'undefined' ? window.innerWidth <= bp : false);
+  useEffect(() => {
+    const fn = () => setM(window.innerWidth <= bp);
+    window.addEventListener("resize", fn);
+    return () => window.removeEventListener("resize", fn);
+  }, [bp]);
+  return m;
+};
+
 // ─── COLOR SYSTEM ──────────────────────────────────────────────────────────────
 const C = {
   pink: "#EFB0C9",
@@ -186,14 +197,17 @@ const Card = ({ children, style = {}, onClick, hover = true }) => {
   );
 };
 
-const SectionTitle = ({ title, subtitle, center = false, light = false }) => (
-  <div style={{ textAlign: center ? "center" : "left", marginBottom: 32 }}>
-    <h2 style={{ fontSize: 32, fontWeight: 800, color: light ? C.white : C.deep, margin: "0 0 8px", lineHeight: 1.2, fontFamily: "'Playfair Display', serif" }}>
-      {title}
-    </h2>
-    {subtitle && <p style={{ fontSize: 15, color: light ? C.textLightSoft : C.textMid, margin: 0 }}>{subtitle}</p>}
-  </div>
-);
+const SectionTitle = ({ title, subtitle, center = false, light = false }) => {
+  const isMobile = useIsMobile();
+  return (
+    <div style={{ textAlign: center ? "center" : "left", marginBottom: isMobile ? 20 : 32 }}>
+      <h2 style={{ fontSize: isMobile ? 22 : 32, fontWeight: 800, color: light ? C.white : C.deep, margin: "0 0 8px", lineHeight: 1.2, fontFamily: "'Pacifico', cursive" }}>
+        {title}
+      </h2>
+      {subtitle && <p style={{ fontSize: isMobile ? 13 : 15, color: light ? C.textLightSoft : C.textMid, margin: 0 }}>{subtitle}</p>}
+    </div>
+  );
+};
 
 const StatusBadge = ({ status }) => {
   const map = {
@@ -211,11 +225,13 @@ const StatusBadge = ({ status }) => {
 const Navbar = ({ page, setPage, cartCount, user, setUser, setShowLogin, setShowCart }) => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const isMobile = useIsMobile();
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 10);
     window.addEventListener("scroll", fn);
     return () => window.removeEventListener("scroll", fn);
   }, []);
+  useEffect(() => { if (!isMobile) setMobileOpen(false); }, [isMobile]);
   const navItems = [
     { id: "home", label: "Trang Chủ" },
     { id: "menu", label: "Thực Đơn" },
@@ -225,73 +241,122 @@ const Navbar = ({ page, setPage, cartCount, user, setUser, setShowLogin, setShow
     ...(user && user.role !== "admin" ? [{ id: "orders", label: "📦 Đơn hàng" }] : []),
   ];
   return (
-    <nav style={{
-      position: "fixed", top: 0, left: 0, right: 0, zIndex: 1000,
-      background: scrolled ? "rgba(255,255,255,0.97)" : "transparent",
-      backdropFilter: scrolled ? "blur(12px)" : "none",
-      boxShadow: scrolled ? "0 2px 20px rgba(143,58,107,0.10)" : "none",
-      transition: "all 0.3s ease",
-      padding: scrolled ? "12px 40px" : "20px 40px",
-      display: "flex", alignItems: "center", justifyContent: "space-between",
-    }}>
-      {/* Logo */}
-      <div style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: 10 }} onClick={() => setPage("home")}>
-        <div style={{ width: 40, height: 40, borderRadius: "50%", background: `linear-gradient(135deg, ${C.pink}, ${C.accent})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>🎂</div>
-        <div>
-          <div style={{ fontFamily: "'Playfair Display', serif", fontWeight: 800, fontSize: 20, color: C.deep, lineHeight: 1 }}>Tiệm Bánh</div>
-          <div style={{ fontSize: 11, color: C.accent, fontWeight: 600, letterSpacing: "0.15em" }}>SWEET MOMENTS</div>
-        </div>
-      </div>
-      {/* Nav Items */}
-      <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-        {navItems.map(item => (
-          <button key={item.id} onClick={() => setPage(item.id)} style={{
-            background: "none", border: "none", cursor: "pointer", padding: "8px 14px",
-            borderRadius: 50, color: page === item.id ? C.accent : (scrolled ? C.textDark : "rgba(80,30,60,0.85)"),
-            fontWeight: page === item.id ? 700 : 500, fontSize: 14,
-            background: page === item.id ? C.pinkLight : "transparent",
-            transition: "all 0.2s", fontFamily: "inherit",
-          }}>{item.label}</button>
-        ))}
-      </div>
-      {/* Actions */}
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        {user ? (
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <div style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }} onClick={() => setPage(user.role === "admin" ? "admin-dashboard" : "orders")}>
-              <div style={{ width: 36, height: 36, borderRadius: "50%", background: `linear-gradient(135deg,${C.pink},${C.accent})`, display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontWeight: 700, fontSize: 14 }}>
-                {user.name.charAt(0)}
-              </div>
-              <span style={{ fontSize: 13, fontWeight: 600, color: C.deepText }}>{user.name}</span>
-            </div>
-            <button onClick={() => setUser(null)} style={{ background: "none", border: "none", cursor: "pointer", color: C.textMid, fontSize: 12, padding: "4px 8px" }}>Đăng xuất</button>
+    <>
+      <nav style={{
+        position: "fixed", top: 0, left: 0, right: 0, zIndex: 1000,
+        background: scrolled || isMobile ? "rgba(255,255,255,0.97)" : "transparent",
+        backdropFilter: scrolled || isMobile ? "blur(12px)" : "none",
+        boxShadow: scrolled || isMobile ? "0 2px 20px rgba(143,58,107,0.10)" : "none",
+        transition: "all 0.3s ease",
+        padding: isMobile ? "10px 16px" : (scrolled ? "12px 40px" : "20px 40px"),
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+      }}>
+        {/* Logo */}
+        <div style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }} onClick={() => setPage("home")}>
+          <div style={{ width: isMobile ? 34 : 40, height: isMobile ? 34 : 40, borderRadius: "50%", background: `linear-gradient(135deg, ${C.pink}, ${C.accent})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: isMobile ? 16 : 20 }}>🎂</div>
+          <div>
+            <div style={{ fontFamily: "'Pacifico', cursive", fontWeight: 800, fontSize: isMobile ? 16 : 20, color: C.deep, lineHeight: 1 }}>Tiệm Bánh</div>
+            <div style={{ fontSize: isMobile ? 9 : 11, color: C.accent, fontWeight: 600, letterSpacing: "0.15em" }}>SWEET MOMENTS</div>
           </div>
-        ) : (
-          <PillBtn small onClick={() => setShowLogin(true)} variant="secondary">Đăng nhập</PillBtn>
+        </div>
+        {/* Desktop Nav Items */}
+        {!isMobile && (
+          <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+            {navItems.map(item => (
+              <button key={item.id} onClick={() => setPage(item.id)} style={{
+                border: "none", cursor: "pointer", padding: "8px 14px",
+                borderRadius: 50, color: page === item.id ? C.accent : (scrolled ? C.textDark : "rgba(80,30,60,0.85)"),
+                fontWeight: page === item.id ? 700 : 500, fontSize: 14,
+                background: page === item.id ? C.pinkLight : "transparent",
+                transition: "all 0.2s", fontFamily: "inherit",
+              }}>{item.label}</button>
+            ))}
+          </div>
         )}
-        {/* Cart */}
-        <button onClick={() => setShowCart(true)} style={{
-          position: "relative", background: C.pinkLight, border: "none", cursor: "pointer",
-          width: 42, height: 42, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: 18, transition: "all 0.2s",
-        }}>
-          🛒
-          {cartCount > 0 && (
-            <span style={{
-              position: "absolute", top: -4, right: -4, background: C.accent, color: "white",
-              borderRadius: "50%", width: 18, height: 18, fontSize: 10, fontWeight: 800,
-              display: "flex", alignItems: "center", justifyContent: "center",
-            }}>{cartCount}</span>
+        {/* Actions */}
+        <div style={{ display: "flex", alignItems: "center", gap: isMobile ? 8 : 12 }}>
+          {!isMobile && user ? (
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }} onClick={() => setPage(user.role === "admin" ? "admin-dashboard" : "orders")}>
+                <div style={{ width: 36, height: 36, borderRadius: "50%", background: `linear-gradient(135deg,${C.pink},${C.accent})`, display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontWeight: 700, fontSize: 14 }}>
+                  {user.name.charAt(0)}
+                </div>
+                <span style={{ fontSize: 13, fontWeight: 600, color: C.deepText }}>{user.name}</span>
+              </div>
+              <button onClick={() => setUser(null)} style={{ background: "none", border: "none", cursor: "pointer", color: C.textMid, fontSize: 12, padding: "4px 8px" }}>Đăng xuất</button>
+            </div>
+          ) : !isMobile ? (
+            <PillBtn small onClick={() => setShowLogin(true)} variant="secondary">Đăng nhập</PillBtn>
+          ) : null}
+          {/* Cart */}
+          <button onClick={() => setShowCart(true)} style={{
+            position: "relative", background: C.pinkLight, border: "none", cursor: "pointer",
+            width: isMobile ? 36 : 42, height: isMobile ? 36 : 42, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: isMobile ? 16 : 18, transition: "all 0.2s",
+          }}>
+            🛒
+            {cartCount > 0 && (
+              <span style={{
+                position: "absolute", top: -4, right: -4, background: C.accent, color: "white",
+                borderRadius: "50%", width: 18, height: 18, fontSize: 10, fontWeight: 800,
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}>{cartCount}</span>
+            )}
+          </button>
+          {/* Hamburger */}
+          {isMobile && (
+            <button onClick={() => setMobileOpen(o => !o)} style={{
+              background: "none", border: "none", cursor: "pointer", padding: 4,
+              display: "flex", flexDirection: "column", gap: 4, justifyContent: "center",
+            }}>
+              <span style={{ width: 22, height: 2.5, background: C.deep, borderRadius: 2, transition: "all 0.3s", transform: mobileOpen ? "rotate(45deg) translateY(6.5px)" : "none" }} />
+              <span style={{ width: 22, height: 2.5, background: C.deep, borderRadius: 2, transition: "all 0.3s", opacity: mobileOpen ? 0 : 1 }} />
+              <span style={{ width: 22, height: 2.5, background: C.deep, borderRadius: 2, transition: "all 0.3s", transform: mobileOpen ? "rotate(-45deg) translateY(-6.5px)" : "none" }} />
+            </button>
           )}
-        </button>
-      </div>
-    </nav>
+        </div>
+      </nav>
+      {/* Mobile Dropdown */}
+      {isMobile && mobileOpen && (
+        <div style={{
+          position: "fixed", top: 56, left: 0, right: 0, bottom: 0, zIndex: 999,
+          background: "rgba(255,255,255,0.98)", backdropFilter: "blur(12px)",
+          display: "flex", flexDirection: "column", padding: "16px 20px", overflowY: "auto",
+        }}>
+          {navItems.map(item => (
+            <button key={item.id} onClick={() => { setPage(item.id); setMobileOpen(false); }} style={{
+              border: "none", cursor: "pointer", padding: "14px 16px",
+              borderRadius: 12, color: page === item.id ? C.accent : C.textDark,
+              fontWeight: page === item.id ? 700 : 500, fontSize: 16,
+              background: page === item.id ? C.pinkLight : "transparent",
+              transition: "all 0.2s", fontFamily: "inherit", textAlign: "left",
+              borderBottom: `1px solid ${C.pinkLight}`,
+            }}>{item.label}</button>
+          ))}
+          <div style={{ marginTop: 16, padding: "12px 16px", display: "flex", flexDirection: "column", gap: 12 }}>
+            {user ? (
+              <>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: "50%", background: `linear-gradient(135deg,${C.pink},${C.accent})`, display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontWeight: 700, fontSize: 14 }}>{user.name.charAt(0)}</div>
+                  <span style={{ fontWeight: 600, color: C.deepText }}>{user.name}</span>
+                </div>
+                <button onClick={() => { setUser(null); setMobileOpen(false); }} style={{ background: C.pinkLight, border: "none", cursor: "pointer", color: C.accent, padding: "10px 16px", borderRadius: 50, fontWeight: 600, fontFamily: "inherit", fontSize: 14 }}>Đăng xuất</button>
+              </>
+            ) : (
+              <PillBtn onClick={() => { setShowLogin(true); setMobileOpen(false); }} style={{ width: "100%", justifyContent: "center" }}>Đăng nhập</PillBtn>
+            )}
+          </div>
+        </div>
+      )}
+    </>
   );
 };
+
 
 // ─── HOME PAGE ─────────────────────────────────────────────────────────────────
 const HeroSection = ({ setPage }) => {
   const [slide, setSlide] = useState(0);
+  const isMobile = useIsMobile();
   const slides = [
     { bg: C.pinkLight, img: CAKE_IMAGES[5], tag: "Mới ra mắt 2026", title: "Signature\nVelvet Hồng", sub: "Hương vị đặc trưng, phủ kem velvet mịn màng — món quà hoàn hảo cho mọi khoảnh khắc", cta: "Khám phá ngay", ctaId: "p6" },
     { bg: "#EAF2FC", img: CAKE_IMAGES[0], tag: "Bestseller #1", title: "Bánh Dâu\nTây Mini", sub: "Ngọt ngào từ những múi dâu tươi chọn lọc, kết hợp lớp kem vanilla mịn như mây", cta: "Đặt bánh", ctaId: "p1" },
@@ -303,50 +368,43 @@ const HeroSection = ({ setPage }) => {
   }, []);
   const s = slides[slide];
   return (
-    <div style={{ minHeight: "100vh", background: s.bg, transition: "background 0.6s ease", display: "flex", alignItems: "center", position: "relative", overflow: "hidden", paddingTop: 80 }}>
-      {/* Decorative blobs */}
-      <div style={{ position: "absolute", top: -80, right: -80, width: 400, height: 400, borderRadius: "50%", background: C.pink, opacity: 0.25, filter: "blur(60px)" }} />
-      <div style={{ position: "absolute", bottom: -60, left: -60, width: 300, height: 300, borderRadius: "50%", background: C.blue, opacity: 0.2, filter: "blur(50px)" }} />
-
-      <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 40px", width: "100%", display: "flex", alignItems: "center", gap: 60 }}>
-        {/* Text */}
-        <div style={{ flex: "0 0 50%", zIndex: 1 }}>
-          <div style={{ display: "inline-block", background: C.pinkMid, color: C.deep, borderRadius: 50, padding: "5px 16px", fontSize: 12, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 20 }}>
+    <div style={{ minHeight: isMobile ? "auto" : "100vh", background: s.bg, transition: "background 0.6s ease", display: "flex", alignItems: "center", position: "relative", overflow: "hidden", paddingTop: 80, paddingBottom: isMobile ? 60 : 0 }}>
+      <div style={{ position: "absolute", top: -80, right: -80, width: isMobile ? 200 : 400, height: isMobile ? 200 : 400, borderRadius: "50%", background: C.pink, opacity: 0.25, filter: "blur(60px)" }} />
+      <div style={{ position: "absolute", bottom: -60, left: -60, width: isMobile ? 150 : 300, height: isMobile ? 150 : 300, borderRadius: "50%", background: C.blue, opacity: 0.2, filter: "blur(50px)" }} />
+      <div style={{ maxWidth: 1280, margin: "0 auto", padding: isMobile ? "20px 20px" : "0 40px", width: "100%", display: "flex", flexDirection: isMobile ? "column" : "row", alignItems: "center", gap: isMobile ? 30 : 60 }}>
+        <div style={{ flex: isMobile ? "none" : "0 0 50%", zIndex: 1, width: isMobile ? "100%" : "auto", textAlign: isMobile ? "center" : "left" }}>
+          <div style={{ display: "inline-block", background: C.pinkMid, color: C.deep, borderRadius: 50, padding: "5px 16px", fontSize: 12, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 16 }}>
             {s.tag}
           </div>
-          <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 64, fontWeight: 900, color: C.deep, lineHeight: 1.1, margin: "0 0 20px", whiteSpace: "pre-line" }}>
+          <h1 style={{ fontFamily: "'Pacifico', cursive", fontSize: isMobile ? 36 : 64, fontWeight: 900, color: C.deep, lineHeight: 1.1, margin: "0 0 16px", whiteSpace: "pre-line" }}>
             {s.title}
           </h1>
-          <p style={{ fontSize: 17, color: C.textMid, lineHeight: 1.7, marginBottom: 36, maxWidth: 440 }}>{s.sub}</p>
-          <div style={{ display: "flex", gap: 12 }}>
+          <p style={{ fontSize: isMobile ? 14 : 17, color: C.textMid, lineHeight: 1.7, marginBottom: isMobile ? 24 : 36, maxWidth: isMobile ? "100%" : 440, margin: isMobile ? "0 auto 24px" : undefined }}>{s.sub}</p>
+          <div style={{ display: "flex", gap: 12, justifyContent: isMobile ? "center" : "flex-start", flexWrap: "wrap" }}>
             <PillBtn onClick={() => setPage("menu")}>{s.cta}</PillBtn>
             <PillBtn variant="secondary" onClick={() => setPage("guide")}>Cách đặt bánh</PillBtn>
           </div>
-          {/* Trust badges */}
-          <div style={{ display: "flex", gap: 24, marginTop: 40 }}>
+          <div style={{ display: "flex", gap: isMobile ? 16 : 24, marginTop: isMobile ? 24 : 40, justifyContent: isMobile ? "center" : "flex-start" }}>
             {[["🎂", "1000+", "Bánh đã làm"], ["⭐", "4.9/5", "Đánh giá"], ["🚀", "Nhanh", "Giao trong 2h"], ["💝", "Tin yêu", "5 năm kinh nghiệm"]].map(([icon, num, label]) => (
               <div key={label} style={{ textAlign: "center" }}>
-                <div style={{ fontSize: 20 }}>{icon}</div>
-                <div style={{ fontSize: 15, fontWeight: 800, color: C.deep }}>{num}</div>
-                <div style={{ fontSize: 11, color: C.textMid }}>{label}</div>
+                <div style={{ fontSize: isMobile ? 16 : 20 }}>{icon}</div>
+                <div style={{ fontSize: isMobile ? 13 : 15, fontWeight: 800, color: C.deep }}>{num}</div>
+                <div style={{ fontSize: isMobile ? 10 : 11, color: C.textMid }}>{label}</div>
               </div>
             ))}
           </div>
         </div>
-        {/* Image */}
         <div style={{ flex: 1, display: "flex", justifyContent: "center", position: "relative" }}>
-          <div style={{ width: 420, height: 420, borderRadius: "50%", background: `radial-gradient(circle at 40% 40%, ${C.pinkMid}, ${C.pinkLight})`, display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
-            <img src={s.img} alt="cake" style={{ width: 380, height: 380, objectFit: "cover", borderRadius: "50%", boxShadow: "0 20px 60px rgba(143,58,107,0.3)" }} />
+          <div style={{ width: isMobile ? 220 : 420, height: isMobile ? 220 : 420, borderRadius: "50%", background: `radial-gradient(circle at 40% 40%, ${C.pinkMid}, ${C.pinkLight})`, display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
+            <img src={s.img} alt="cake" style={{ width: isMobile ? 200 : 380, height: isMobile ? 200 : 380, objectFit: "cover", borderRadius: "50%", boxShadow: "0 20px 60px rgba(143,58,107,0.3)" }} />
           </div>
-          {/* Floating badge */}
-          <div style={{ position: "absolute", bottom: 30, right: 0, background: C.white, borderRadius: 16, padding: "12px 18px", boxShadow: C.cardShadow }}>
-            <div style={{ fontSize: 11, color: C.textMid, fontWeight: 600 }}>Giá từ</div>
-            <div style={{ fontSize: 22, fontWeight: 900, color: C.accent }}>280.000đ</div>
+          <div style={{ position: "absolute", bottom: isMobile ? 0 : 30, right: isMobile ? 10 : 0, background: C.white, borderRadius: 16, padding: isMobile ? "8px 12px" : "12px 18px", boxShadow: C.cardShadow }}>
+            <div style={{ fontSize: isMobile ? 10 : 11, color: C.textMid, fontWeight: 600 }}>Giá từ</div>
+            <div style={{ fontSize: isMobile ? 16 : 22, fontWeight: 900, color: C.accent }}>280.000đ</div>
           </div>
         </div>
       </div>
-      {/* Slide dots */}
-      <div style={{ position: "absolute", bottom: 30, left: "50%", transform: "translateX(-50%)", display: "flex", gap: 8 }}>
+      <div style={{ position: "absolute", bottom: isMobile ? 16 : 30, left: "50%", transform: "translateX(-50%)", display: "flex", gap: 8 }}>
         {slides.map((_, i) => (
           <button key={i} onClick={() => setSlide(i)} style={{
             width: i === slide ? 24 : 8, height: 8, borderRadius: 50, border: "none", cursor: "pointer",
@@ -358,88 +416,98 @@ const HeroSection = ({ setPage }) => {
   );
 };
 
-const CategorySection = ({ setPage, setActiveCat }) => (
-  <section style={{ padding: "80px 40px", background: C.white }}>
-    <div style={{ maxWidth: 1280, margin: "0 auto" }}>
-      <SectionTitle title="Khám Phá Danh Mục" subtitle="Đa dạng lựa chọn cho mọi dịp đặc biệt" center />
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
-        {CATEGORIES.map(cat => (
-          <Card key={cat.id} onClick={() => { setActiveCat(cat.id); setPage("menu"); }} style={{ padding: 24, textAlign: "center", cursor: "pointer" }}>
-            <div style={{ fontSize: 44, marginBottom: 12 }}>{cat.icon}</div>
-            <div style={{ fontWeight: 700, color: C.deep, marginBottom: 4, fontSize: 15 }}>{cat.title}</div>
-            <div style={{ fontSize: 12, color: C.textMid }}>{cat.count} sản phẩm</div>
-          </Card>
-        ))}
+const CategorySection = ({ setPage, setActiveCat }) => {
+  const isMobile = useIsMobile();
+  return (
+    <section style={{ padding: isMobile ? "40px 16px" : "80px 40px", background: C.white }}>
+      <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+        <SectionTitle title="Khám Phá Danh Mục" subtitle="Đa dạng lựa chọn cho mọi dịp đặc biệt" center />
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(4, 1fr)", gap: isMobile ? 12 : 16 }}>
+          {CATEGORIES.map(cat => (
+            <Card key={cat.id} onClick={() => { setActiveCat(cat.id); setPage("menu"); }} style={{ padding: isMobile ? 16 : 24, textAlign: "center", cursor: "pointer" }}>
+              <div style={{ fontSize: isMobile ? 32 : 44, marginBottom: 8 }}>{cat.icon}</div>
+              <div style={{ fontWeight: 700, color: C.deep, marginBottom: 4, fontSize: isMobile ? 13 : 15 }}>{cat.title}</div>
+              <div style={{ fontSize: 12, color: C.textMid }}>{cat.count} sản phẩm</div>
+            </Card>
+          ))}
+        </div>
       </div>
-    </div>
-  </section>
-);
+    </section>
+  );
+};
 
-const ProductGrid = ({ title, subtitle, products, addToCart, setPage, setViewProduct }) => (
-  <section style={{ padding: "80px 40px", background: C.cream }}>
-    <div style={{ maxWidth: 1280, margin: "0 auto" }}>
-      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 32 }}>
-        <SectionTitle title={title} subtitle={subtitle} />
-        <PillBtn small variant="secondary" onClick={() => setPage("menu")}>Xem tất cả →</PillBtn>
+const ProductGrid = ({ title, subtitle, products, addToCart, setPage, setViewProduct }) => {
+  const isMobile = useIsMobile();
+  return (
+    <section style={{ padding: isMobile ? "40px 16px" : "80px 40px", background: C.cream }}>
+      <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+        <div style={{ display: "flex", alignItems: isMobile ? "center" : "flex-end", justifyContent: "space-between", marginBottom: isMobile ? 20 : 32, flexWrap: "wrap", gap: 12 }}>
+          <SectionTitle title={title} subtitle={subtitle} />
+          <PillBtn small variant="secondary" onClick={() => setPage("menu")}>Xem tất cả →</PillBtn>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(3, 1fr)", gap: isMobile ? 12 : 24 }}>
+          {products.map(p => (
+            <Card key={p.id} onClick={() => { setViewProduct(p); setPage("product"); }} style={{ overflow: "hidden" }}>
+              <div style={{ position: "relative" }}>
+                <img src={p.img} alt={p.name} style={{ width: "100%", height: 220, objectFit: "cover" }} />
+                <div style={{ position: "absolute", top: 12, left: 12, display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {p.tags.map(t => <Tag key={t} label={t} />)}
+                </div>
+              </div>
+              <div style={{ padding: 20 }}>
+                <h3 style={{ margin: "0 0 6px", fontSize: 16, fontWeight: 700, color: C.deepText }}>{p.name}</h3>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                  <StarRating rating={p.rating} />
+                  <span style={{ fontSize: 12, color: C.textMid }}>Đã bán: {p.sold}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontSize: 20, fontWeight: 900, color: C.accent }}>{p.price}đ</span>
+                  <button onClick={e => { e.stopPropagation(); addToCart(p); }} style={{
+                    background: C.pinkLight, border: "none", cursor: "pointer", borderRadius: 50,
+                    width: 36, height: 36, fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center",
+                    transition: "all 0.2s",
+                  }}>+</button>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 24 }}>
-        {products.map(p => (
-          <Card key={p.id} onClick={() => { setViewProduct(p); setPage("product"); }} style={{ overflow: "hidden" }}>
-            <div style={{ position: "relative" }}>
-              <img src={p.img} alt={p.name} style={{ width: "100%", height: 220, objectFit: "cover" }} />
-              <div style={{ position: "absolute", top: 12, left: 12, display: "flex", gap: 6, flexWrap: "wrap" }}>
-                {p.tags.map(t => <Tag key={t} label={t} />)}
-              </div>
-            </div>
-            <div style={{ padding: 20 }}>
-              <h3 style={{ margin: "0 0 6px", fontSize: 16, fontWeight: 700, color: C.deepText }}>{p.name}</h3>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                <StarRating rating={p.rating} />
-                <span style={{ fontSize: 12, color: C.textMid }}>Đã bán: {p.sold}</span>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span style={{ fontSize: 20, fontWeight: 900, color: C.accent }}>{p.price}đ</span>
-                <button onClick={e => { e.stopPropagation(); addToCart(p); }} style={{
-                  background: C.pinkLight, border: "none", cursor: "pointer", borderRadius: 50,
-                  width: 36, height: 36, fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center",
-                  transition: "all 0.2s",
-                }}>+</button>
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
-    </div>
-  </section>
-);
+    </section>
+  );
+};
 
-const HotSection = ({ products, addToCart, setPage, setViewProduct }) => (
-  <section style={{ padding: "80px 40px", background: C.deep }}>
-    <div style={{ maxWidth: 1280, margin: "0 auto" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 32 }}>
-        <SectionTitle title="🔥 Hot & Bestseller" subtitle="Những sản phẩm được yêu thích nhất tháng này" light />
-        <PillBtn small variant="ghost" onClick={() => setPage("menu")}>Xem thêm →</PillBtn>
-      </div>
-      <div style={{ display: "flex", gap: 20, overflowX: "auto", paddingBottom: 8 }}>
-        {products.map(p => (
-          <Card key={p.id} style={{ minWidth: 220, flex: "0 0 220px", overflow: "hidden", cursor: "pointer" }} onClick={() => { setViewProduct(p); setPage("product"); }}>
-            <img src={p.img} alt={p.name} style={{ width: "100%", height: 160, objectFit: "cover" }} />
-            <div style={{ padding: 14 }}>
-              <div style={{ display: "flex", gap: 4, marginBottom: 6, flexWrap: "wrap" }}>{p.tags.map(t => <Tag key={t} label={t} />)}</div>
-              <div style={{ fontWeight: 700, fontSize: 13, color: C.deepText, marginBottom: 4 }}>{p.name}</div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span style={{ fontWeight: 800, color: C.accent, fontSize: 16 }}>{p.price}đ</span>
-                <button onClick={e => { e.stopPropagation(); addToCart(p); }} style={{ background: C.accent, border: "none", cursor: "pointer", borderRadius: "50%", width: 30, height: 30, color: "white", fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center" }}>+</button>
+const HotSection = ({ products, addToCart, setPage, setViewProduct }) => {
+  const isMobile = useIsMobile();
+  return (
+    <section style={{ padding: isMobile ? "40px 16px" : "80px 40px", background: C.deep }}>
+      <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: isMobile ? "center" : "flex-end", marginBottom: isMobile ? 20 : 32, flexWrap: "wrap", gap: 12 }}>
+          <SectionTitle title="🔥 Hot & Bestseller" subtitle="Những sản phẩm được yêu thích nhất tháng này" light />
+          <PillBtn small variant="ghost" onClick={() => setPage("menu")}>Xem thêm →</PillBtn>
+        </div>
+        <div style={{ display: "flex", gap: isMobile ? 12 : 20, overflowX: "auto", paddingBottom: 8 }}>
+          {products.map(p => (
+            <Card key={p.id} style={{ minWidth: 220, flex: "0 0 220px", overflow: "hidden", cursor: "pointer" }} onClick={() => { setViewProduct(p); setPage("product"); }}>
+              <img src={p.img} alt={p.name} style={{ width: "100%", height: 160, objectFit: "cover" }} />
+              <div style={{ padding: 14 }}>
+                <div style={{ display: "flex", gap: 4, marginBottom: 6, flexWrap: "wrap" }}>{p.tags.map(t => <Tag key={t} label={t} />)}</div>
+                <div style={{ fontWeight: 700, fontSize: 13, color: C.deepText, marginBottom: 4 }}>{p.name}</div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontWeight: 800, color: C.accent, fontSize: 16 }}>{p.price}đ</span>
+                  <button onClick={e => { e.stopPropagation(); addToCart(p); }} style={{ background: C.accent, border: "none", cursor: "pointer", borderRadius: "50%", width: 30, height: 30, color: "white", fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center" }}>+</button>
+                </div>
               </div>
-            </div>
-          </Card>
-        ))}
+            </Card>
+          ))}
+        </div>
       </div>
-    </div>
-  </section>
-);
+    </section>
+  );
+};
 
 const HowToOrderSection = () => {
+  const isMobile = useIsMobile();
   const steps = [
     { num: "01", icon: "📱", title: "Chọn Sản Phẩm", desc: "Duyệt qua thực đơn phong phú và chọn chiếc bánh phù hợp với dịp đặc biệt của bạn" },
     { num: "02", icon: "✏️", title: "Tuỳ Chỉnh Bánh", desc: "Chọn kích thước, hương vị, màu sắc và nội dung ghi trên bánh theo ý muốn" },
@@ -447,19 +515,19 @@ const HowToOrderSection = () => {
     { num: "04", icon: "🚀", title: "Nhận Bánh", desc: "Giao hàng tận nơi trong vòng 2-4 giờ hoặc nhận tại cửa hàng theo thời gian đã hẹn" },
   ];
   return (
-    <section style={{ padding: "80px 40px", background: C.white }}>
+    <section style={{ padding: isMobile ? "40px 16px" : "80px 40px", background: C.white }}>
       <div style={{ maxWidth: 1280, margin: "0 auto" }}>
         <SectionTitle title="Cách Đặt Bánh Đơn Giản" subtitle="4 bước đơn giản để có chiếc bánh hoàn hảo" center />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 24, marginTop: 40 }}>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(4,1fr)", gap: isMobile ? 16 : 24, marginTop: isMobile ? 20 : 40 }}>
           {steps.map((s, i) => (
             <div key={i} style={{ textAlign: "center", position: "relative" }}>
-              {i < 3 && <div style={{ position: "absolute", top: 30, right: -12, width: "50%", height: 2, background: `linear-gradient(90deg, ${C.pink}, transparent)`, zIndex: 0 }} />}
-              <div style={{ width: 64, height: 64, borderRadius: "50%", background: C.pinkLight, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, margin: "0 auto 16px", position: "relative", zIndex: 1 }}>
+              {!isMobile && i < 3 && <div style={{ position: "absolute", top: 30, right: -12, width: "50%", height: 2, background: `linear-gradient(90deg, ${C.pink}, transparent)`, zIndex: 0 }} />}
+              <div style={{ width: isMobile ? 48 : 64, height: isMobile ? 48 : 64, borderRadius: "50%", background: C.pinkLight, display: "flex", alignItems: "center", justifyContent: "center", fontSize: isMobile ? 22 : 28, margin: "0 auto 12px", position: "relative", zIndex: 1 }}>
                 {s.icon}
               </div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: C.accent, letterSpacing: "0.1em", marginBottom: 8 }}>BƯỚC {s.num}</div>
-              <h3 style={{ fontSize: 17, fontWeight: 800, color: C.deep, marginBottom: 8 }}>{s.title}</h3>
-              <p style={{ fontSize: 14, color: C.textMid, lineHeight: 1.6 }}>{s.desc}</p>
+              <div style={{ fontSize: 12, fontWeight: 700, color: C.accent, letterSpacing: "0.1em", marginBottom: 6 }}>BƯỚC {s.num}</div>
+              <h3 style={{ fontSize: isMobile ? 14 : 17, fontWeight: 800, color: C.deep, marginBottom: 6 }}>{s.title}</h3>
+              <p style={{ fontSize: isMobile ? 12 : 14, color: C.textMid, lineHeight: 1.6 }}>{s.desc}</p>
             </div>
           ))}
         </div>
@@ -468,82 +536,90 @@ const HowToOrderSection = () => {
   );
 };
 
-const ReviewSection = () => (
-  <section style={{ padding: "80px 40px", background: `linear-gradient(135deg, ${C.pinkLight} 0%, ${C.blueLight} 100%)` }}>
-    <div style={{ maxWidth: 1280, margin: "0 auto" }}>
-      <SectionTitle title="Khách Hàng Nói Gì" subtitle="Niềm tin của khách hàng là động lực lớn nhất của chúng tôi" center />
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 20 }}>
-        {REVIEWS.map(r => (
-          <Card key={r.id} style={{ padding: 24 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
-              <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                <img src={r.avatar} alt={r.name} style={{ width: 44, height: 44, borderRadius: "50%", border: `2px solid ${C.pink}` }} />
-                <div>
-                  <div style={{ fontWeight: 700, color: C.deepText }}>{r.name}</div>
-                  <div style={{ fontSize: 11, color: C.textMid }}>{r.product} · {r.date}</div>
+const ReviewSection = () => {
+  const isMobile = useIsMobile();
+  return (
+    <section style={{ padding: isMobile ? "40px 16px" : "80px 40px", background: `linear-gradient(135deg, ${C.pinkLight} 0%, ${C.blueLight} 100%)` }}>
+      <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+        <SectionTitle title="Khách Hàng Nói Gì" subtitle="Niềm tin của khách hàng là động lực lớn nhất của chúng tôi" center />
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(2,1fr)", gap: isMobile ? 12 : 20 }}>
+          {REVIEWS.map(r => (
+            <Card key={r.id} style={{ padding: isMobile ? 16 : 24 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12, flexWrap: "wrap", gap: 8 }}>
+                <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                  <img src={r.avatar} alt={r.name} style={{ width: 40, height: 40, borderRadius: "50%", border: `2px solid ${C.pink}` }} />
+                  <div>
+                    <div style={{ fontWeight: 700, color: C.deepText, fontSize: isMobile ? 13 : 14 }}>{r.name}</div>
+                    <div style={{ fontSize: 11, color: C.textMid }}>{r.product} · {r.date}</div>
+                  </div>
                 </div>
+                <StarRating rating={r.rating} size={14} />
               </div>
-              <StarRating rating={r.rating} size={16} />
-            </div>
-            <p style={{ margin: 0, color: C.textMid, fontSize: 14, lineHeight: 1.7, fontStyle: "italic" }}>"{r.comment}"</p>
-          </Card>
-        ))}
+              <p style={{ margin: 0, color: C.textMid, fontSize: isMobile ? 13 : 14, lineHeight: 1.7, fontStyle: "italic" }}>"{r.comment}"</p>
+            </Card>
+          ))}
+        </div>
       </div>
-    </div>
-  </section>
-);
+    </section>
+  );
+};
 
-const Footer = ({ setPage }) => (
-  <footer style={{ background: C.deep, color: C.textLight, padding: "60px 40px 30px" }}>
-    <div style={{ maxWidth: 1280, margin: "0 auto" }}>
-      <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1.5fr", gap: 40, marginBottom: 40 }}>
-        <div>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-            <div style={{ width: 44, height: 44, borderRadius: "50%", background: `linear-gradient(135deg,${C.pink},${C.accent})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>🎂</div>
-            <div>
-              <div style={{ fontFamily: "'Playfair Display', serif", fontWeight: 800, fontSize: 20 }}>Tiệm Bánh</div>
-              <div style={{ fontSize: 11, color: C.textLightSoft, letterSpacing: "0.15em" }}>SWEET MOMENTS</div>
+const Footer = ({ setPage }) => {
+  const isMobile = useIsMobile();
+  return (
+    <footer style={{ background: C.deep, color: C.textLight, padding: isMobile ? "40px 20px 24px" : "60px 40px 30px" }}>
+      <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "2fr 1fr 1fr 1.5fr", gap: isMobile ? 24 : 40, marginBottom: isMobile ? 24 : 40 }}>
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+              <div style={{ width: 44, height: 44, borderRadius: "50%", background: `linear-gradient(135deg,${C.pink},${C.accent})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>🎂</div>
+              <div>
+                <div style={{ fontFamily: "'Pacifico', cursive", fontWeight: 800, fontSize: 20 }}>Tiệm Bánh</div>
+                <div style={{ fontSize: 11, color: C.textLightSoft, letterSpacing: "0.15em" }}>SWEET MOMENTS</div>
+              </div>
+            </div>
+            <p style={{ color: C.textLightSoft, fontSize: 14, lineHeight: 1.8, marginBottom: 16 }}>Mang đến những chiếc bánh ngọt ngào, tạo nên kỷ niệm đáng nhớ trong mỗi dịp đặc biệt của bạn.</p>
+            <div style={{ display: "flex", gap: 12 }}>
+              {["📘", "📷", "🎵"].map((icon, i) => <div key={i} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 16 }}>{icon}</div>)}
             </div>
           </div>
-          <p style={{ color: C.textLightSoft, fontSize: 14, lineHeight: 1.8, marginBottom: 16 }}>Mang đến những chiếc bánh ngọt ngào, tạo nên kỷ niệm đáng nhớ trong mỗi dịp đặc biệt của bạn.</p>
-          <div style={{ display: "flex", gap: 12 }}>
-            {["📘", "📷", "🎵"].map((icon, i) => <div key={i} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 16 }}>{icon}</div>)}
+          <div>
+            <h4 style={{ marginBottom: 16, fontSize: 14, fontWeight: 700, letterSpacing: "0.08em" }}>MENU</h4>
+            {["Trang Chủ", "Thực Đơn", "Về Chúng Tôi", "Liên Hệ"].map(l => (
+              <div key={l} style={{ color: C.textLightSoft, fontSize: 14, marginBottom: 10, cursor: "pointer" }}>{l}</div>
+            ))}
+          </div>
+          <div>
+            <h4 style={{ marginBottom: 16, fontSize: 14, fontWeight: 700, letterSpacing: "0.08em" }}>HỖ TRỢ</h4>
+            {["Hướng dẫn đặt bánh", "Chính sách đổi trả", "Điều khoản sử dụng", "FAQ"].map(l => (
+              <div key={l} style={{ color: C.textLightSoft, fontSize: 14, marginBottom: 10, cursor: "pointer" }}>{l}</div>
+            ))}
+          </div>
+          <div>
+            <h4 style={{ marginBottom: 16, fontSize: 14, fontWeight: 700, letterSpacing: "0.08em" }}>LIÊN HỆ</h4>
+            {[["📍", "123 Đường Bánh Ngọt, Hà Nội"], ["📞", "0912 345 678"], ["✉️", "hello@tiembanh.vn"], ["⏰", "8:00 - 21:00 hàng ngày"]].map(([icon, text]) => (
+              <div key={text} style={{ display: "flex", gap: 8, color: C.textLightSoft, fontSize: 14, marginBottom: 10 }}>
+                <span>{icon}</span><span>{text}</span>
+              </div>
+            ))}
           </div>
         </div>
-        <div>
-          <h4 style={{ marginBottom: 16, fontSize: 14, fontWeight: 700, letterSpacing: "0.08em" }}>MENU</h4>
-          {["Trang Chủ", "Thực Đơn", "Về Chúng Tôi", "Liên Hệ"].map(l => (
-            <div key={l} style={{ color: C.textLightSoft, fontSize: 14, marginBottom: 10, cursor: "pointer" }}>{l}</div>
-          ))}
-        </div>
-        <div>
-          <h4 style={{ marginBottom: 16, fontSize: 14, fontWeight: 700, letterSpacing: "0.08em" }}>HỖ TRỢ</h4>
-          {["Hướng dẫn đặt bánh", "Chính sách đổi trả", "Điều khoản sử dụng", "FAQ"].map(l => (
-            <div key={l} style={{ color: C.textLightSoft, fontSize: 14, marginBottom: 10, cursor: "pointer" }}>{l}</div>
-          ))}
-        </div>
-        <div>
-          <h4 style={{ marginBottom: 16, fontSize: 14, fontWeight: 700, letterSpacing: "0.08em" }}>LIÊN HỆ</h4>
-          {[["📍", "123 Đường Bánh Ngọt, Hà Nội"], ["📞", "0912 345 678"], ["✉️", "hello@tiembanh.vn"], ["⏰", "8:00 - 21:00 hàng ngày"]].map(([icon, text]) => (
-            <div key={text} style={{ display: "flex", gap: 8, color: C.textLightSoft, fontSize: 14, marginBottom: 10 }}>
-              <span>{icon}</span><span>{text}</span>
-            </div>
-          ))}
+        <div style={{ borderTop: "1px solid rgba(255,255,255,0.12)", paddingTop: 20, display: "flex", justifyContent: isMobile ? "center" : "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+          <span style={{ color: C.textLightSoft, fontSize: 12 }}>© 2026 Tiệm Bánh Sweet Moments.</span>
+          <span style={{ color: C.textLightSoft, fontSize: 12 }}>Made with 💕 for sweet moments</span>
         </div>
       </div>
-      <div style={{ borderTop: "1px solid rgba(255,255,255,0.12)", paddingTop: 20, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <span style={{ color: C.textLightSoft, fontSize: 13 }}>© 2026 Tiệm Bánh Sweet Moments. Tất cả quyền được bảo lưu.</span>
-        <span style={{ color: C.textLightSoft, fontSize: 13 }}>Made with 💕 for sweet moments</span>
-      </div>
-    </div>
-  </footer>
-);
+    </footer>
+  );
+};
 
 // ─── MENU PAGE ─────────────────────────────────────────────────────────────────
 const MenuPage = ({ activeCat, setActiveCat, addToCart, setPage, setViewProduct }) => {
+  const isMobile = useIsMobile();
   const [priceRange, setPriceRange] = useState("all");
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("popular");
+  const [showMobileFilter, setShowMobileFilter] = useState(false);
 
   const filtered = PRODUCTS.filter(p => {
     const matchCat = !activeCat || p.category === activeCat;
@@ -556,44 +632,51 @@ const MenuPage = ({ activeCat, setActiveCat, addToCart, setPage, setViewProduct 
   return (
     <div style={{ minHeight: "100vh", background: C.cream, paddingTop: 80 }}>
       {/* Banner */}
-      <div style={{ background: C.deep, padding: "40px 40px", textAlign: "center" }}>
-        <h1 style={{ fontFamily: "'Playfair Display', serif", color: "white", fontSize: 42, fontWeight: 900, margin: "0 0 8px" }}>Thực Đơn</h1>
-        <p style={{ color: C.textLightSoft, fontSize: 15, margin: 0 }}>Khám phá hơn 48 loại bánh đặc sắc</p>
+      <div style={{ background: C.deep, padding: isMobile ? "24px 16px" : "40px 40px", textAlign: "center" }}>
+        <h1 style={{ fontFamily: "'Pacifico', cursive", color: "white", fontSize: isMobile ? 28 : 42, fontWeight: 900, margin: "0 0 8px" }}>Thực Đơn</h1>
+        <p style={{ color: C.textLightSoft, fontSize: isMobile ? 13 : 15, margin: 0 }}>Khám phá hơn 48 loại bánh đặc sắc</p>
       </div>
-      <div style={{ maxWidth: 1280, margin: "0 auto", padding: "40px 40px", display: "flex", gap: 32 }}>
-        {/* Sidebar */}
-        <div style={{ width: 240, flexShrink: 0 }}>
-          <Card style={{ padding: 24, marginBottom: 20 }}>
-            <h3 style={{ margin: "0 0 16px", fontSize: 16, fontWeight: 800, color: C.deep }}>Danh Mục</h3>
-            <button onClick={() => setActiveCat(null)} style={{ display: "block", width: "100%", textAlign: "left", padding: "8px 12px", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: "inherit", background: !activeCat ? C.pinkLight : "transparent", color: !activeCat ? C.accent : C.textMid, fontWeight: !activeCat ? 700 : 400, fontSize: 14, marginBottom: 4 }}>Tất cả</button>
-            {CATEGORIES.map(cat => (
-              <button key={cat.id} onClick={() => setActiveCat(cat.id)} style={{ display: "block", width: "100%", textAlign: "left", padding: "8px 12px", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: "inherit", background: activeCat === cat.id ? C.pinkLight : "transparent", color: activeCat === cat.id ? C.accent : C.textMid, fontWeight: activeCat === cat.id ? 700 : 400, fontSize: 14, marginBottom: 4 }}>
-                {cat.icon} {cat.title}
-              </button>
-            ))}
-          </Card>
-          <Card style={{ padding: 24, marginBottom: 20 }}>
-            <h3 style={{ margin: "0 0 16px", fontSize: 16, fontWeight: 800, color: C.deep }}>Khoảng Giá</h3>
-            {[["all", "Tất cả"], ["under300", "Dưới 300k"], ["300to500", "300k – 500k"], ["over500", "Trên 500k"]].map(([val, label]) => (
-              <button key={val} onClick={() => setPriceRange(val)} style={{ display: "block", width: "100%", textAlign: "left", padding: "8px 12px", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: "inherit", background: priceRange === val ? C.pinkLight : "transparent", color: priceRange === val ? C.accent : C.textMid, fontWeight: priceRange === val ? 700 : 400, fontSize: 14, marginBottom: 4 }}>
-                {label}
-              </button>
-            ))}
-          </Card>
-        </div>
+      <div style={{ maxWidth: 1280, margin: "0 auto", padding: isMobile ? "16px" : "40px 40px", display: "flex", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 16 : 32 }}>
+        {/* Sidebar - mobile toggle */}
+        {isMobile && (
+          <button onClick={() => setShowMobileFilter(v => !v)} style={{ padding: "10px 16px", borderRadius: 12, border: `1px solid ${C.pinkMid}`, background: C.white, cursor: "pointer", fontFamily: "inherit", fontWeight: 600, fontSize: 14, color: C.accent, display: "flex", alignItems: "center", gap: 6 }}>
+            🔍 Bộ lọc {showMobileFilter ? "▲" : "▼"}
+          </button>
+        )}
+        {(!isMobile || showMobileFilter) && (
+          <div style={{ width: isMobile ? "100%" : 240, flexShrink: 0 }}>
+            <Card style={{ padding: 24, marginBottom: 20 }}>
+              <h3 style={{ margin: "0 0 16px", fontSize: 16, fontWeight: 800, color: C.deep }}>Danh Mục</h3>
+              <button onClick={() => setActiveCat(null)} style={{ display: "block", width: "100%", textAlign: "left", padding: "8px 12px", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: "inherit", background: !activeCat ? C.pinkLight : "transparent", color: !activeCat ? C.accent : C.textMid, fontWeight: !activeCat ? 700 : 400, fontSize: 14, marginBottom: 4 }}>Tất cả</button>
+              {CATEGORIES.map(cat => (
+                <button key={cat.id} onClick={() => setActiveCat(cat.id)} style={{ display: "block", width: "100%", textAlign: "left", padding: "8px 12px", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: "inherit", background: activeCat === cat.id ? C.pinkLight : "transparent", color: activeCat === cat.id ? C.accent : C.textMid, fontWeight: activeCat === cat.id ? 700 : 400, fontSize: 14, marginBottom: 4 }}>
+                  {cat.icon} {cat.title}
+                </button>
+              ))}
+            </Card>
+            <Card style={{ padding: 24, marginBottom: 20 }}>
+              <h3 style={{ margin: "0 0 16px", fontSize: 16, fontWeight: 800, color: C.deep }}>Khoảng Giá</h3>
+              {[["all", "Tất cả"], ["under300", "Dưới 300k"], ["300to500", "300k – 500k"], ["over500", "Trên 500k"]].map(([val, label]) => (
+                <button key={val} onClick={() => setPriceRange(val)} style={{ display: "block", width: "100%", textAlign: "left", padding: "8px 12px", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: "inherit", background: priceRange === val ? C.pinkLight : "transparent", color: priceRange === val ? C.accent : C.textMid, fontWeight: priceRange === val ? 700 : 400, fontSize: 14, marginBottom: 4 }}>
+                  {label}
+                </button>
+              ))}
+            </Card>
+          </div>
+        )}
         {/* Products */}
         <div style={{ flex: 1 }}>
           {/* Search & Sort */}
-          <div style={{ display: "flex", gap: 12, marginBottom: 24, alignItems: "center" }}>
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="🔍  Tìm kiếm bánh..." style={{ flex: 1, padding: "10px 18px", borderRadius: 50, border: `1px solid ${C.pinkMid}`, fontSize: 14, fontFamily: "inherit", outline: "none", background: C.white }} />
-            <select value={sortBy} onChange={e => setSortBy(e.target.value)} style={{ padding: "10px 18px", borderRadius: 50, border: `1px solid ${C.pinkMid}`, fontSize: 14, fontFamily: "inherit", outline: "none", background: C.white, color: C.textDark }}>
+          <div style={{ display: "flex", gap: 8, marginBottom: 16, alignItems: "center", flexWrap: "wrap" }}>
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="🔍  Tìm kiếm bánh..." style={{ flex: "1 1 200px", padding: "10px 16px", borderRadius: 50, border: `1px solid ${C.pinkMid}`, fontSize: 14, fontFamily: "inherit", outline: "none", background: C.white }} />
+            <select value={sortBy} onChange={e => setSortBy(e.target.value)} style={{ padding: "10px 14px", borderRadius: 50, border: `1px solid ${C.pinkMid}`, fontSize: 13, fontFamily: "inherit", outline: "none", background: C.white, color: C.textDark }}>
               <option value="popular">Phổ biến nhất</option>
               <option value="price-asc">Giá tăng dần</option>
               <option value="price-desc">Giá giảm dần</option>
             </select>
-            <span style={{ fontSize: 13, color: C.textMid, whiteSpace: "nowrap" }}>{filtered.length} sản phẩm</span>
+            <span style={{ fontSize: 12, color: C.textMid, whiteSpace: "nowrap" }}>{filtered.length} SP</span>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 20 }}>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(3,1fr)", gap: isMobile ? 10 : 20 }}>
             {filtered.map(p => (
               <Card key={p.id} style={{ overflow: "hidden" }} onClick={() => { setViewProduct(p); setPage("product"); }}>
                 <img src={p.img} alt={p.name} style={{ width: "100%", height: 180, objectFit: "cover" }} />
@@ -623,6 +706,7 @@ const MenuPage = ({ activeCat, setActiveCat, addToCart, setPage, setViewProduct 
 
 // ─── PRODUCT DETAIL ────────────────────────────────────────────────────────────
 const ProductPage = ({ product, addToCart, setPage, setCart }) => {
+  const isMobile = useIsMobile();
   const [qty, setQty] = useState(1);
   const [selSize, setSelSize] = useState("16cm");
   const [selFlavor, setSelFlavor] = useState("Vanilla");
@@ -640,14 +724,14 @@ const ProductPage = ({ product, addToCart, setPage, setCart }) => {
   return (
     <div style={{ minHeight: "100vh", background: C.cream, paddingTop: 80 }}>
       {/* Header band */}
-      <div style={{ background: C.deep, padding: "16px 40px" }}>
+      <div style={{ background: C.deep, padding: isMobile ? "12px 16px" : "16px 40px" }}>
         <button onClick={() => setPage("menu")} style={{ background: "none", border: "none", color: C.textLightSoft, cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", gap: 6, fontFamily: "inherit" }}>← Quay lại thực đơn</button>
       </div>
-      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "40px", display: "flex", gap: 48 }}>
+      <div style={{ maxWidth: 1200, margin: "0 auto", padding: isMobile ? "20px 16px" : "40px", display: "flex", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 24 : 48 }}>
         {/* Images */}
-        <div style={{ flex: "0 0 480px" }}>
-          <div style={{ borderRadius: 24, overflow: "hidden", boxShadow: C.cardShadow }}>
-            <img src={gallery[activeImg]} alt={product.name} style={{ width: "100%", height: 400, objectFit: "cover", transition: "opacity 0.3s ease" }} />
+        <div style={{ flex: isMobile ? "none" : "0 0 480px", width: isMobile ? "100%" : undefined }}>
+          <div style={{ borderRadius: 20, overflow: "hidden", boxShadow: C.cardShadow }}>
+            <img src={gallery[activeImg]} alt={product.name} style={{ width: "100%", height: isMobile ? 260 : 400, objectFit: "cover", transition: "opacity 0.3s ease" }} />
           </div>
           <div style={{ display: "flex", gap: 12, marginTop: 12 }}>
             {gallery.map((img, i) => (
@@ -660,7 +744,7 @@ const ProductPage = ({ product, addToCart, setPage, setCart }) => {
         {/* Info */}
         <div style={{ flex: 1 }}>
           <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>{product.tags.map(t => <Tag key={t} label={t} />)}</div>
-          <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 36, fontWeight: 900, color: C.deep, margin: "0 0 12px" }}>{product.name}</h1>
+          <h1 style={{ fontFamily: "'Pacifico', cursive", fontSize: 36, fontWeight: 900, color: C.deep, margin: "0 0 12px" }}>{product.name}</h1>
           <div style={{ display: "flex", gap: 16, alignItems: "center", marginBottom: 20 }}>
             <StarRating rating={product.rating} size={18} />
             <span style={{ color: C.textMid, fontSize: 14 }}>({product.sold} đánh giá)</span>
@@ -718,12 +802,13 @@ const ProductPage = ({ product, addToCart, setPage, setCart }) => {
 
 // ─── CART SIDEBAR ──────────────────────────────────────────────────────────────
 const CartSidebar = ({ cart, setCart, onClose, setPage, user }) => {
+  const isMobile = useIsMobile();
   const total = cart.reduce((s, i) => s + parseInt(i.price.replace(/\./g, "")) * i.qty, 0);
   const fmt = n => n.toLocaleString("vi-VN");
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 2000, display: "flex" }}>
       <div style={{ flex: 1, background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)" }} onClick={onClose} />
-      <div style={{ width: 420, background: C.white, display: "flex", flexDirection: "column", boxShadow: "-8px 0 40px rgba(0,0,0,0.15)" }}>
+      <div style={{ width: isMobile ? "100%" : 420, background: C.white, display: "flex", flexDirection: "column", boxShadow: "-8px 0 40px rgba(0,0,0,0.15)" }}>
         <div style={{ padding: "24px 24px 16px", borderBottom: `1px solid ${C.pinkMid}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: C.deep }}>🛒 Giỏ hàng ({cart.reduce((s, i) => s + i.qty, 0)})</h2>
           <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 24, color: C.textMid }}>✕</button>
@@ -766,6 +851,7 @@ const CartSidebar = ({ cart, setCart, onClose, setPage, user }) => {
 
 // ─── CHECKOUT PAGE ─────────────────────────────────────────────────────────────
 const CheckoutPage = ({ cart, setCart, setPage, user }) => {
+  const isMobile = useIsMobile();
   const [step, setStep] = useState(1);
   const [form, setForm] = useState({ name: user?.name || "", phone: "", address: "", note: "", payment: "transfer" });
   const total = cart.reduce((s, i) => s + parseInt(i.price.replace(/\./g, "")) * i.qty, 0);
@@ -774,7 +860,7 @@ const CheckoutPage = ({ cart, setCart, setPage, user }) => {
     <div style={{ minHeight: "100vh", background: C.cream, paddingTop: 80, display: "flex", alignItems: "center", justifyContent: "center" }}>
       <Card style={{ padding: 60, textAlign: "center", maxWidth: 480 }}>
         <div style={{ fontSize: 64, marginBottom: 20 }}>🎉</div>
-        <h2 style={{ fontFamily: "'Playfair Display', serif", color: C.deep, fontSize: 28, marginBottom: 12 }}>Đặt hàng thành công!</h2>
+        <h2 style={{ fontFamily: "'Pacifico', cursive", color: C.deep, fontSize: 28, marginBottom: 12 }}>Đặt hàng thành công!</h2>
         <p style={{ color: C.textMid, marginBottom: 24 }}>Cảm ơn bạn đã tin tưởng Tiệm Bánh Sweet Moments. Chúng tôi sẽ liên hệ xác nhận đơn hàng trong vài phút.</p>
         <div style={{ background: C.pinkLight, borderRadius: 12, padding: 16, marginBottom: 24 }}>
           <div style={{ fontWeight: 700, color: C.deep }}>Mã đơn hàng: #ORD2026{String(Math.floor(Math.random() * 900 + 100))}</div>
@@ -786,10 +872,10 @@ const CheckoutPage = ({ cart, setCart, setPage, user }) => {
   );
   return (
     <div style={{ minHeight: "100vh", background: C.cream, paddingTop: 80 }}>
-      <div style={{ background: C.deep, padding: "20px 40px" }}>
-        <h2 style={{ color: "white", margin: 0, fontFamily: "'Playfair Display', serif", fontSize: 28 }}>Thanh Toán</h2>
+      <div style={{ background: C.deep, padding: isMobile ? "16px" : "20px 40px" }}>
+        <h2 style={{ color: "white", margin: 0, fontFamily: "'Pacifico', cursive", fontSize: isMobile ? 22 : 28 }}>Thanh Toán</h2>
       </div>
-      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "40px", display: "flex", gap: 32 }}>
+      <div style={{ maxWidth: 1100, margin: "0 auto", padding: isMobile ? "20px 16px" : "40px", display: "flex", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 20 : 32 }}>
         {/* Form */}
         <div style={{ flex: 1 }}>
           <Card style={{ padding: 32 }}>
@@ -813,7 +899,7 @@ const CheckoutPage = ({ cart, setCart, setPage, user }) => {
           </Card>
         </div>
         {/* Summary */}
-        <div style={{ width: 340 }}>
+        <div style={{ width: isMobile ? "100%" : 340 }}>
           <Card style={{ padding: 24 }}>
             <h3 style={{ color: C.deep, marginBottom: 16, fontSize: 18, fontWeight: 800 }}>Tóm tắt đơn hàng</h3>
             {cart.map(item => (
@@ -892,7 +978,7 @@ const OrderDetailModal = ({ order, onClose }) => {
         <button onClick={onClose} style={{ position: "absolute", top: 12, right: 16, background: "none", border: "none", cursor: "pointer", fontSize: 22, color: C.textMid }}>✕</button>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
           <div>
-            <h2 style={{ fontFamily: "'Playfair Display', serif", color: C.deep, margin: "0 0 4px", fontSize: 24 }}>Chi tiết đơn hàng</h2>
+            <h2 style={{ fontFamily: "'Pacifico', cursive", color: C.deep, margin: "0 0 4px", fontSize: 24 }}>Chi tiết đơn hàng</h2>
             <span style={{ fontSize: 14, color: C.accent, fontWeight: 700 }}>{order.id}</span>
           </div>
           <StatusBadge status={order.status} />
@@ -931,7 +1017,7 @@ const OrderHistoryPage = ({ user, setPage }) => {
   return (
     <div style={{ minHeight: "100vh", background: C.cream, paddingTop: 80 }}>
       <div style={{ background: C.deep, padding: "20px 40px" }}>
-        <h2 style={{ color: "white", margin: 0, fontFamily: "'Playfair Display', serif" }}>Theo dõi đơn hàng</h2>
+        <h2 style={{ color: "white", margin: 0, fontFamily: "'Pacifico', cursive" }}>Theo dõi đơn hàng</h2>
         <p style={{ color: C.textLightSoft, fontSize: 14, margin: "6px 0 0" }}>Xem trạng thái và chi tiết các đơn hàng của bạn</p>
       </div>
       <div style={{ maxWidth: 900, margin: "0 auto", padding: "40px" }}>
@@ -1014,7 +1100,7 @@ const LoginModal = ({ onClose, onLogin }) => {
         <button onClick={onClose} style={{ position: "absolute", top: 16, right: 16, background: "none", border: "none", cursor: "pointer", fontSize: 24, color: C.textMid }}>✕</button>
         <div style={{ textAlign: "center", marginBottom: 28 }}>
           <div style={{ fontSize: 48 }}>🎂</div>
-          <h2 style={{ fontFamily: "'Playfair Display', serif", color: C.deep, margin: "8px 0 4px" }}>Đăng nhập</h2>
+          <h2 style={{ fontFamily: "'Pacifico', cursive", color: C.deep, margin: "8px 0 4px" }}>Đăng nhập</h2>
           <p style={{ color: C.textMid, fontSize: 13, margin: 0 }}>Đăng nhập để đặt bánh và tích điểm thành viên</p>
         </div>
         <div style={{ marginBottom: 14 }}>
@@ -1088,7 +1174,7 @@ const StatCard = ({ icon, label, value, sub, color }) => (
 
 const AdminDashboard = () => (
   <div>
-    <h1 style={{ fontFamily: "'Playfair Display', serif", color: C.deep, margin: "0 0 8px", fontSize: 30 }}>Tổng Quan</h1>
+    <h1 style={{ fontFamily: "'Pacifico', cursive", color: C.deep, margin: "0 0 8px", fontSize: 30 }}>Tổng Quan</h1>
     <p style={{ color: C.textMid, marginBottom: 32 }}>Hôm nay, 21/04/2026</p>
     {/* Stat Cards */}
     <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16, marginBottom: 32 }}>
@@ -1165,7 +1251,7 @@ const AdminOrders = () => {
   const updateStatus = (id, newStatus) => setOrders(os => os.map(o => o.id === id ? { ...o, status: newStatus } : o));
   return (
     <div>
-      <h1 style={{ fontFamily: "'Playfair Display', serif", color: C.deep, margin: "0 0 24px", fontSize: 30 }}>Quản Lý Đơn Hàng</h1>
+      <h1 style={{ fontFamily: "'Pacifico', cursive", color: C.deep, margin: "0 0 24px", fontSize: 30 }}>Quản Lý Đơn Hàng</h1>
       {/* Tabs */}
       <div style={{ display: "flex", gap: 8, marginBottom: 24, flexWrap: "wrap" }}>
         {[["all", "Tất cả"], ["pending", "Chờ xác nhận"], ["confirmed", "Đã xác nhận"], ["delivering", "Đang giao"], ["done", "Hoàn thành"], ["cancelled", "Đã hủy"]].map(([val, label]) => (
@@ -1282,7 +1368,7 @@ const ProductFormModal = ({ product, onSave, onClose, title, categories, onAddCa
     <div style={{ position: "fixed", inset: 0, zIndex: 3000, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.45)", backdropFilter: "blur(8px)" }}>
       <Card style={{ width: 600, padding: 32, maxHeight: "90vh", overflowY: "auto", position: "relative" }}>
         <button onClick={onClose} style={{ position: "absolute", top: 12, right: 16, background: "none", border: "none", cursor: "pointer", fontSize: 22, color: C.textMid }}>✕</button>
-        <h2 style={{ fontFamily: "'Playfair Display', serif", color: C.accent, margin: "0 0 24px" }}>{title}</h2>
+        <h2 style={{ fontFamily: "'Pacifico', cursive", color: C.accent, margin: "0 0 24px" }}>{title}</h2>
 
         {/* ── Tên & Giá ── */}
         {[["name", "Tên sản phẩm *", "text"], ["price", "Giá (VD: 280.000) *", "text"]].map(([key, label, type]) => (
@@ -1507,7 +1593,7 @@ const AdminProducts = () => {
       )}
 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-        <h1 style={{ fontFamily: "'Playfair Display', serif", color: C.deep, margin: 0, fontSize: 30 }}>Quản Lý Sản Phẩm</h1>
+        <h1 style={{ fontFamily: "'Pacifico', cursive", color: C.deep, margin: 0, fontSize: 30 }}>Quản Lý Sản Phẩm</h1>
         <PillBtn onClick={() => setShowAdd(true)}>+ Thêm sản phẩm</PillBtn>
       </div>
 
@@ -1608,7 +1694,7 @@ const AdminProducts = () => {
 
 const AdminStats = () => (
   <div>
-    <h1 style={{ fontFamily: "'Playfair Display', serif", color: C.deep, margin: "0 0 24px", fontSize: 30 }}>Thống Kê Doanh Thu</h1>
+    <h1 style={{ fontFamily: "'Pacifico', cursive", color: C.deep, margin: "0 0 24px", fontSize: 30 }}>Thống Kê Doanh Thu</h1>
     <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16, marginBottom: 28 }}>
       <StatCard icon="💰" label="Doanh thu năm 2026" value="732tr" sub="▲ 18% so 2025" color={C.accent} />
       <StatCard icon="📦" label="Tổng đơn hàng" value="1.254" sub="Tỷ lệ hoàn thành 93%" />
@@ -1670,7 +1756,7 @@ const AdminCustomers = () => {
   const tierColor = { Gold: "#F5A623", Silver: "#95A5A6", Bronze: "#CD7F32" };
   return (
     <div>
-      <h1 style={{ fontFamily: "'Playfair Display', serif", color: C.deep, margin: "0 0 24px", fontSize: 30 }}>Quản Lý Khách Hàng</h1>
+      <h1 style={{ fontFamily: "'Pacifico', cursive", color: C.deep, margin: "0 0 24px", fontSize: 30 }}>Quản Lý Khách Hàng</h1>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16, marginBottom: 24 }}>
         <StatCard icon="👥" label="Tổng khách hàng" value="284" sub="▲ 18 người mới tháng này" />
         <StatCard icon="🥇" label="Khách VIP (Gold)" value="47" sub="16.5% tổng khách" />
@@ -1712,41 +1798,45 @@ const AdminCustomers = () => {
 };
 
 // ─── ABOUT PAGE ────────────────────────────────────────────────────────────────
-const AboutPage = () => (
-  <div style={{ minHeight: "100vh", paddingTop: 80 }}>
-    <div style={{ background: C.deep, padding: "60px 40px", textAlign: "center" }}>
-      <h1 style={{ fontFamily: "'Playfair Display', serif", color: "white", fontSize: 48, margin: "0 0 12px" }}>Về Chúng Tôi</h1>
-      <p style={{ color: C.textLightSoft, fontSize: 16 }}>5 năm tạo nên những khoảnh khắc ngọt ngào</p>
-    </div>
-    <div style={{ maxWidth: 1100, margin: "0 auto", padding: "60px 40px" }}>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 48, alignItems: "center", marginBottom: 64 }}>
-        <div>
-          <h2 style={{ fontFamily: "'Playfair Display', serif", color: C.deep, fontSize: 36, marginBottom: 16 }}>Câu chuyện của chúng tôi</h2>
-          <p style={{ color: C.textMid, lineHeight: 1.8, fontSize: 15, marginBottom: 16 }}>Ra đời năm 2021, Tiệm Bánh Sweet Moments được thành lập bởi tình yêu thuần túy với nghệ thuật làm bánh. Chúng tôi tin rằng mỗi chiếc bánh không chỉ là một món ăn — đó là một kỷ niệm, một cảm xúc, một tình yêu được gói gọn trong từng lớp kem mịn màng.</p>
-          <p style={{ color: C.textMid, lineHeight: 1.8, fontSize: 15 }}>Với hơn 1.000 chiếc bánh đã được tạo ra, chúng tôi tự hào khi được đồng hành trong những khoảnh khắc đặc biệt nhất của khách hàng — từ sinh nhật đầu tiên của em bé đến lễ kỷ niệm của những đôi uyên ương.</p>
-        </div>
-        <div style={{ position: "relative" }}>
-          <img src={CAKE_IMAGES[5]} alt="Story" style={{ width: "100%", borderRadius: 24, boxShadow: C.cardShadow }} />
-          <div style={{ position: "absolute", bottom: -16, left: -16, background: C.white, borderRadius: 16, padding: 20, boxShadow: C.cardShadow, textAlign: "center" }}>
-            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 32, fontWeight: 900, color: C.accent }}>1000+</div>
-            <div style={{ fontSize: 12, color: C.textMid }}>Chiếc bánh đã làm</div>
+const AboutPage = () => {
+  const isMobile = useIsMobile();
+  return (
+    <div style={{ minHeight: "100vh", paddingTop: 80 }}>
+      <div style={{ background: C.deep, padding: isMobile ? "40px 20px" : "60px 40px", textAlign: "center" }}>
+        <h1 style={{ fontFamily: "'Pacifico', cursive", color: "white", fontSize: isMobile ? 32 : 48, margin: "0 0 12px" }}>Về Chúng Tôi</h1>
+        <p style={{ color: C.textLightSoft, fontSize: isMobile ? 14 : 16 }}>5 năm tạo nên những khoảnh khắc ngọt ngào</p>
+      </div>
+      <div style={{ maxWidth: 1100, margin: "0 auto", padding: isMobile ? "32px 16px" : "60px 40px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: isMobile ? 24 : 48, alignItems: "center", marginBottom: isMobile ? 32 : 64 }}>
+          <div>
+            <h2 style={{ fontFamily: "'Pacifico', cursive", color: C.deep, fontSize: 36, marginBottom: 16 }}>Câu chuyện của chúng tôi</h2>
+            <p style={{ color: C.textMid, lineHeight: 1.8, fontSize: 15, marginBottom: 16 }}>Ra đời năm 2021, Tiệm Bánh Sweet Moments được thành lập bởi tình yêu thuần túy với nghệ thuật làm bánh. Chúng tôi tin rằng mỗi chiếc bánh không chỉ là một món ăn — đó là một kỷ niệm, một cảm xúc, một tình yêu được gói gọn trong từng lớp kem mịn màng.</p>
+            <p style={{ color: C.textMid, lineHeight: 1.8, fontSize: 15 }}>Với hơn 1.000 chiếc bánh đã được tạo ra, chúng tôi tự hào khi được đồng hành trong những khoảnh khắc đặc biệt nhất của khách hàng — từ sinh nhật đầu tiên của em bé đến lễ kỷ niệm của những đôi uyên ương.</p>
+          </div>
+          <div style={{ position: "relative" }}>
+            <img src={CAKE_IMAGES[5]} alt="Story" style={{ width: "100%", borderRadius: 24, boxShadow: C.cardShadow }} />
+            <div style={{ position: "absolute", bottom: -16, left: -16, background: C.white, borderRadius: 16, padding: 20, boxShadow: C.cardShadow, textAlign: "center" }}>
+              <div style={{ fontFamily: "'Pacifico', cursive", fontSize: 32, fontWeight: 900, color: C.accent }}>1000+</div>
+              <div style={{ fontSize: 12, color: C.textMid }}>Chiếc bánh đã làm</div>
+            </div>
           </div>
         </div>
-      </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 24 }}>
-        {[["🥚", "Nguyên liệu tươi", "Chúng tôi chỉ sử dụng nguyên liệu tươi ngon nhất, nhập khẩu từ các nhà cung cấp uy tín"], ["👩‍🍳", "Đầu bếp chuyên nghiệp", "Đội ngũ 5 bánh nhân có hơn 10 năm kinh nghiệm trang trí và chế biến bánh cao cấp"], ["💝", "Tâm huyết & Tình yêu", "Mỗi chiếc bánh được làm với 100% tâm huyết, đảm bảo sự hoàn hảo trong từng chi tiết"]].map(([icon, title, desc]) => (
-          <Card key={title} style={{ padding: 28, textAlign: "center" }}>
-            <div style={{ fontSize: 40, marginBottom: 14 }}>{icon}</div>
-            <h3 style={{ color: C.deep, marginBottom: 8, fontSize: 17 }}>{title}</h3>
-            <p style={{ color: C.textMid, fontSize: 14, lineHeight: 1.7, margin: 0 }}>{desc}</p>
-          </Card>
-        ))}
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3,1fr)", gap: isMobile ? 16 : 24 }}>
+          {[["🥚", "Nguyên liệu tươi", "Chúng tôi chỉ sử dụng nguyên liệu tươi ngon nhất, nhập khẩu từ các nhà cung cấp uy tín"], ["👩‍🍳", "Đầu bếp chuyên nghiệp", "Đội ngũ 5 bánh nhân có hơn 10 năm kinh nghiệm trang trí và chế biến bánh cao cấp"], ["💝", "Tâm huyết & Tình yêu", "Mỗi chiếc bánh được làm với 100% tâm huyết, đảm bảo sự hoàn hảo trong từng chi tiết"]].map(([icon, title, desc]) => (
+            <Card key={title} style={{ padding: isMobile ? 20 : 28, textAlign: "center" }}>
+              <div style={{ fontSize: isMobile ? 32 : 40, marginBottom: 12 }}>{icon}</div>
+              <h3 style={{ color: C.deep, marginBottom: 8, fontSize: isMobile ? 15 : 17 }}>{title}</h3>
+              <p style={{ color: C.textMid, fontSize: isMobile ? 13 : 14, lineHeight: 1.7, margin: 0 }}>{desc}</p>
+            </Card>
+          ))}
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 const ContactPage = () => {
+  const isMobile = useIsMobile();
   const [contactForm, setContactForm] = useState({ name: "", email: "", phone: "", message: "" });
   const [submitted, setSubmitted] = useState(false);
   const handleContactSubmit = () => {
@@ -1756,12 +1846,12 @@ const ContactPage = () => {
   };
   return (
     <div style={{ minHeight: "100vh", paddingTop: 80, background: C.cream }}>
-      <div style={{ background: C.deep, padding: "40px 40px" }}>
-        <h1 style={{ fontFamily: "'Playfair Display', serif", color: "white", fontSize: 40, margin: 0 }}>Liên Hệ</h1>
+      <div style={{ background: C.deep, padding: isMobile ? "24px 16px" : "40px 40px" }}>
+        <h1 style={{ fontFamily: "'Pacifico', cursive", color: "white", fontSize: isMobile ? 28 : 40, margin: 0 }}>Liên Hệ</h1>
       </div>
-      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "60px 40px", display: "grid", gridTemplateColumns: "1fr 1.2fr", gap: 48 }}>
+      <div style={{ maxWidth: 1100, margin: "0 auto", padding: isMobile ? "32px 16px" : "60px 40px", display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1.2fr", gap: isMobile ? 24 : 48 }}>
         <div>
-          <h2 style={{ fontFamily: "'Playfair Display', serif", color: C.deep, fontSize: 28, marginBottom: 24 }}>Thông tin liên hệ</h2>
+          <h2 style={{ fontFamily: "'Pacifico', cursive", color: C.deep, fontSize: isMobile ? 22 : 28, marginBottom: 20 }}>Thông tin liên hệ</h2>
           {[["📍", "Địa chỉ", "123 Đường Bánh Ngọt, Quận Cầu Giấy, Hà Nội"], ["📞", "Điện thoại", "0912 345 678 (8:00 – 21:00)"], ["✉️", "Email", "hello@tiembanh.vn"], ["⏰", "Giờ mở cửa", "Thứ 2 – Chủ Nhật: 8:00 – 21:00"]].map(([icon, label, val]) => (
             <div key={label} style={{ display: "flex", gap: 16, marginBottom: 20 }}>
               <div style={{ width: 48, height: 48, borderRadius: "50%", background: C.pinkLight, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0 }}>{icon}</div>
@@ -1849,8 +1939,8 @@ export default function App() {
   if (isAdmin) {
     const adminContent = { "admin-dashboard": <AdminDashboard />, "admin-orders": <AdminOrders />, "admin-products": <AdminProducts />, "admin-customers": <AdminCustomers />, "admin-stats": <AdminStats /> };
     return (
-      <div style={{ fontFamily: "'DM Sans', -apple-system, sans-serif", background: C.cream, minHeight: "100vh" }}>
-        <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800;900&family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+      <div style={{ fontFamily: "'Comfortaa', sans-serif", background: C.cream, minHeight: "100vh" }}>
+        <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Comfortaa:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
         <AdminSidebar adminPage={adminPage} setAdminPage={setAdminPage} />
         {/* Admin top bar */}
         <div style={{ position: "fixed", top: 0, left: 220, right: 0, height: 64, background: C.white, zIndex: 100, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 32px", boxShadow: "0 1px 8px rgba(143,58,107,0.08)" }}>
@@ -1869,8 +1959,8 @@ export default function App() {
 
   // Client layout
   return (
-    <div style={{ fontFamily: "'DM Sans', -apple-system, sans-serif" }}>
-      <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800;900&family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <div style={{ fontFamily: "'Comfortaa', sans-serif" }}>
+      <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Comfortaa:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
       <Navbar page={page} setPage={setPage} cartCount={cartCount} user={user} setUser={setUser} setShowLogin={setShowLogin} setShowCart={setShowCart} />
 
       {page === "home" && <>
@@ -1886,7 +1976,7 @@ export default function App() {
       {page === "product" && <ProductPage product={viewProduct} addToCart={addToCart} setPage={setPage} setCart={setCart} />}
       {page === "about" && <AboutPage />}
       {page === "contact" && <ContactPage />}
-      {page === "guide" && <div style={{ minHeight: "100vh", paddingTop: 80, background: C.cream }}><div style={{ background: C.deep, padding: "40px 40px", textAlign: "center" }}><h1 style={{ fontFamily: "'Playfair Display', serif", color: "white", fontSize: 40, margin: "0 0 8px" }}>Hướng Dẫn Đặt Bánh</h1><p style={{ color: C.textLightSoft, fontSize: 15, margin: 0 }}>4 bước đơn giản để có chiếc bánh hoàn hảo</p></div><HowToOrderSection /></div>}
+      {page === "guide" && <div style={{ minHeight: "100vh", paddingTop: 80, background: C.cream }}><div style={{ background: C.deep, padding: "40px 40px", textAlign: "center" }}><h1 style={{ fontFamily: "'Pacifico', cursive", color: "white", fontSize: 40, margin: "0 0 8px" }}>Hướng Dẫn Đặt Bánh</h1><p style={{ color: C.textLightSoft, fontSize: 15, margin: 0 }}>4 bước đơn giản để có chiếc bánh hoàn hảo</p></div><HowToOrderSection /></div>}
       {page === "checkout" && <CheckoutPage cart={cart} setCart={setCart} setPage={setPage} user={user} />}
       {page === "orders" && <OrderHistoryPage user={user} setPage={setPage} />}
 
