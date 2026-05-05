@@ -201,7 +201,7 @@ const SectionTitle = ({ title, subtitle, center = false, light = false }) => {
   const isMobile = useIsMobile();
   return (
     <div style={{ textAlign: center ? "center" : "left", marginBottom: isMobile ? 20 : 32 }}>
-      <h2 style={{ fontSize: isMobile ? 22 : 32, fontWeight: 800, color: light ? C.white : C.deep, margin: "0 0 8px", lineHeight: 1.2, fontFamily: "'Pacifico', cursive" }}>
+      <h2 style={{ fontSize: isMobile ? 26 : 36, fontWeight: 400, color: light ? C.white : C.deep, margin: "0 0 8px", lineHeight: 1.2, fontFamily: "'Pacifico', cursive" }}>
         {title}
       </h2>
       {subtitle && <p style={{ fontSize: isMobile ? 13 : 15, color: light ? C.textLightSoft : C.textMid, margin: 0 }}>{subtitle}</p>}
@@ -255,7 +255,7 @@ const Navbar = ({ page, setPage, cartCount, user, setUser, setShowLogin, setShow
         <div style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }} onClick={() => setPage("home")}>
           <div style={{ width: isMobile ? 34 : 40, height: isMobile ? 34 : 40, borderRadius: "50%", background: `linear-gradient(135deg, ${C.pink}, ${C.accent})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: isMobile ? 16 : 20 }}>🎂</div>
           <div>
-            <div style={{ fontFamily: "'Pacifico', cursive", fontWeight: 800, fontSize: isMobile ? 16 : 20, color: C.deep, lineHeight: 1 }}>Tiệm Bánh</div>
+            <div style={{ fontFamily: "'Pacifico', cursive", fontWeight: 400, fontSize: isMobile ? 20 : 24, color: C.deep, lineHeight: 1 }}>Tiệm Bánh</div>
             <div style={{ fontSize: isMobile ? 9 : 11, color: C.accent, fontWeight: 600, letterSpacing: "0.15em" }}>SWEET MOMENTS</div>
           </div>
         </div>
@@ -376,7 +376,7 @@ const HeroSection = ({ setPage }) => {
           <div style={{ display: "inline-block", background: C.pinkMid, color: C.deep, borderRadius: 50, padding: "5px 16px", fontSize: 12, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 16 }}>
             {s.tag}
           </div>
-          <h1 style={{ fontFamily: "'Pacifico', cursive", fontSize: isMobile ? 36 : 64, fontWeight: 900, color: C.deep, lineHeight: 1.1, margin: "0 0 16px", whiteSpace: "pre-line" }}>
+          <h1 style={{ fontFamily: "'Pacifico', cursive", fontSize: isMobile ? 40 : 68, fontWeight: 400, color: C.deep, lineHeight: 1.1, margin: "0 0 16px", whiteSpace: "pre-line" }}>
             {s.title}
           </h1>
           <p style={{ fontSize: isMobile ? 14 : 17, color: C.textMid, lineHeight: 1.7, marginBottom: isMobile ? 24 : 36, maxWidth: isMobile ? "100%" : 440, margin: isMobile ? "0 auto 24px" : undefined }}>{s.sub}</p>
@@ -436,7 +436,7 @@ const CategorySection = ({ setPage, setActiveCat }) => {
   );
 };
 
-const ProductGrid = ({ title, subtitle, products, addToCart, setPage, setViewProduct }) => {
+const ProductGrid = ({ title, subtitle, products, addToCart, setPage, setViewProduct, handleBuyNow }) => {
   const isMobile = useIsMobile();
   return (
     <section style={{ padding: isMobile ? "40px 16px" : "80px 40px", background: C.cream }}>
@@ -461,12 +461,21 @@ const ProductGrid = ({ title, subtitle, products, addToCart, setPage, setViewPro
                   <span style={{ fontSize: 12, color: C.textMid }}>Đã bán: {p.sold}</span>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontSize: 20, fontWeight: 900, color: C.accent }}>{p.price}đ</span>
-                  <button onClick={e => { e.stopPropagation(); addToCart(p); }} style={{
-                    background: C.pinkLight, border: "none", cursor: "pointer", borderRadius: 50,
-                    width: 36, height: 36, fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center",
-                    transition: "all 0.2s",
-                  }}>+</button>
+                  <span style={{ fontSize: isMobile ? 16 : 20, fontWeight: 900, color: C.accent }}>{p.price}đ</span>
+                  {/* NEW: Nút Mua ngay + Thêm giỏ hàng */}
+                  <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                    <button onClick={e => { e.stopPropagation(); handleBuyNow(p); }} style={{
+                      background: `linear-gradient(135deg, ${C.accent}, ${C.deep})`, border: "none", cursor: "pointer", borderRadius: 50,
+                      padding: isMobile ? "5px 10px" : "6px 14px", fontSize: isMobile ? 10 : 11, fontWeight: 700, color: "white",
+                      display: "flex", alignItems: "center", gap: 4, fontFamily: "inherit",
+                      transition: "all 0.2s", boxShadow: "0 2px 8px rgba(139,58,107,0.25)",
+                    }}>⚡ {isMobile ? "Mua" : "Mua ngay"}</button>
+                    <button onClick={e => { e.stopPropagation(); addToCart(p); }} style={{
+                      background: C.pinkLight, border: "none", cursor: "pointer", borderRadius: 50,
+                      width: isMobile ? 30 : 36, height: isMobile ? 30 : 36, fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center",
+                      transition: "all 0.2s",
+                    }}>+</button>
+                  </div>
                 </div>
               </div>
             </Card>
@@ -477,7 +486,7 @@ const ProductGrid = ({ title, subtitle, products, addToCart, setPage, setViewPro
   );
 };
 
-const HotSection = ({ products, addToCart, setPage, setViewProduct }) => {
+const HotSection = ({ products, addToCart, setPage, setViewProduct, handleBuyNow }) => {
   const isMobile = useIsMobile();
   return (
     <section style={{ padding: isMobile ? "40px 16px" : "80px 40px", background: C.deep }}>
@@ -495,7 +504,16 @@ const HotSection = ({ products, addToCart, setPage, setViewProduct }) => {
                 <div style={{ fontWeight: 700, fontSize: 13, color: C.deepText, marginBottom: 4 }}>{p.name}</div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span style={{ fontWeight: 800, color: C.accent, fontSize: 16 }}>{p.price}đ</span>
-                  <button onClick={e => { e.stopPropagation(); addToCart(p); }} style={{ background: C.accent, border: "none", cursor: "pointer", borderRadius: "50%", width: 30, height: 30, color: "white", fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center" }}>+</button>
+                  {/* NEW: Nút Mua ngay + Thêm giỏ */}
+                  <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                    <button onClick={e => { e.stopPropagation(); handleBuyNow(p); }} style={{
+                      background: `linear-gradient(135deg, ${C.accent}, ${C.deep})`, border: "none", cursor: "pointer", borderRadius: 50,
+                      padding: "4px 10px", fontSize: 10, fontWeight: 700, color: "white",
+                      display: "flex", alignItems: "center", gap: 3, fontFamily: "inherit",
+                      transition: "all 0.2s", boxShadow: "0 2px 6px rgba(139,58,107,0.2)",
+                    }}>⚡ Mua</button>
+                    <button onClick={e => { e.stopPropagation(); addToCart(p); }} style={{ background: C.accent, border: "none", cursor: "pointer", borderRadius: "50%", width: 30, height: 30, color: "white", fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center" }}>+</button>
+                  </div>
                 </div>
               </div>
             </Card>
@@ -574,7 +592,7 @@ const Footer = ({ setPage }) => {
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
               <div style={{ width: 44, height: 44, borderRadius: "50%", background: `linear-gradient(135deg,${C.pink},${C.accent})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>🎂</div>
               <div>
-                <div style={{ fontFamily: "'Pacifico', cursive", fontWeight: 800, fontSize: 20 }}>Tiệm Bánh</div>
+                <div style={{ fontFamily: "'Pacifico', cursive", fontWeight: 400, fontSize: 24 }}>Tiệm Bánh</div>
                 <div style={{ fontSize: 11, color: C.textLightSoft, letterSpacing: "0.15em" }}>SWEET MOMENTS</div>
               </div>
             </div>
@@ -614,7 +632,7 @@ const Footer = ({ setPage }) => {
 };
 
 // ─── MENU PAGE ─────────────────────────────────────────────────────────────────
-const MenuPage = ({ activeCat, setActiveCat, addToCart, setPage, setViewProduct }) => {
+const MenuPage = ({ activeCat, setActiveCat, addToCart, setPage, setViewProduct, handleBuyNow }) => {
   const isMobile = useIsMobile();
   const [priceRange, setPriceRange] = useState("all");
   const [search, setSearch] = useState("");
@@ -633,7 +651,7 @@ const MenuPage = ({ activeCat, setActiveCat, addToCart, setPage, setViewProduct 
     <div style={{ minHeight: "100vh", background: C.cream, paddingTop: 80 }}>
       {/* Banner */}
       <div style={{ background: C.deep, padding: isMobile ? "24px 16px" : "40px 40px", textAlign: "center" }}>
-        <h1 style={{ fontFamily: "'Pacifico', cursive", color: "white", fontSize: isMobile ? 28 : 42, fontWeight: 900, margin: "0 0 8px" }}>Thực Đơn</h1>
+        <h1 style={{ fontFamily: "'Pacifico', cursive", color: "white", fontSize: isMobile ? 32 : 46, fontWeight: 400, margin: "0 0 8px" }}>Thực Đơn</h1>
         <p style={{ color: C.textLightSoft, fontSize: isMobile ? 13 : 15, margin: 0 }}>Khám phá hơn 48 loại bánh đặc sắc</p>
       </div>
       <div style={{ maxWidth: 1280, margin: "0 auto", padding: isMobile ? "16px" : "40px 40px", display: "flex", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 16 : 32 }}>
@@ -685,8 +703,17 @@ const MenuPage = ({ activeCat, setActiveCat, addToCart, setPage, setViewProduct 
                   <h3 style={{ margin: "0 0 6px", fontSize: 15, fontWeight: 700, color: C.deepText }}>{p.name}</h3>
                   <StarRating rating={p.rating} />
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 10 }}>
-                    <span style={{ fontSize: 18, fontWeight: 900, color: C.accent }}>{p.price}đ</span>
-                    <button onClick={e => { e.stopPropagation(); addToCart(p); }} style={{ background: C.accent, border: "none", cursor: "pointer", borderRadius: "50%", width: 32, height: 32, color: "white", fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center" }}>+</button>
+                    <span style={{ fontSize: isMobile ? 15 : 18, fontWeight: 900, color: C.accent }}>{p.price}đ</span>
+                    {/* NEW: Nút Mua ngay + Thêm giỏ */}
+                    <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
+                      <button onClick={e => { e.stopPropagation(); handleBuyNow(p); }} style={{
+                        background: `linear-gradient(135deg, ${C.accent}, ${C.deep})`, border: "none", cursor: "pointer", borderRadius: 50,
+                        padding: isMobile ? "4px 8px" : "5px 12px", fontSize: isMobile ? 10 : 11, fontWeight: 700, color: "white",
+                        display: "flex", alignItems: "center", gap: 3, fontFamily: "inherit",
+                        transition: "all 0.2s", boxShadow: "0 2px 6px rgba(139,58,107,0.2)",
+                      }}>⚡ {isMobile ? "Mua" : "Mua ngay"}</button>
+                      <button onClick={e => { e.stopPropagation(); addToCart(p); }} style={{ background: C.accent, border: "none", cursor: "pointer", borderRadius: "50%", width: 32, height: 32, color: "white", fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center" }}>+</button>
+                    </div>
                   </div>
                 </div>
               </Card>
@@ -744,7 +771,7 @@ const ProductPage = ({ product, addToCart, setPage, setCart }) => {
         {/* Info */}
         <div style={{ flex: 1 }}>
           <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>{product.tags.map(t => <Tag key={t} label={t} />)}</div>
-          <h1 style={{ fontFamily: "'Pacifico', cursive", fontSize: 36, fontWeight: 900, color: C.deep, margin: "0 0 12px" }}>{product.name}</h1>
+          <h1 style={{ fontFamily: "'Pacifico', cursive", fontSize: 40, fontWeight: 400, color: C.deep, margin: "0 0 12px" }}>{product.name}</h1>
           <div style={{ display: "flex", gap: 16, alignItems: "center", marginBottom: 20 }}>
             <StarRating rating={product.rating} size={18} />
             <span style={{ color: C.textMid, fontSize: 14 }}>({product.sold} đánh giá)</span>
@@ -858,14 +885,68 @@ const CheckoutPage = ({ cart, setCart, setPage, user }) => {
   const fmt = n => n.toLocaleString("vi-VN");
   if (step === 3) return (
     <div style={{ minHeight: "100vh", background: C.cream, paddingTop: 80, display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <Card style={{ padding: 60, textAlign: "center", maxWidth: 480 }}>
+      <Card style={{ padding: isMobile ? 32 : 48, textAlign: "center", maxWidth: 520 }}>
         <div style={{ fontSize: 64, marginBottom: 20 }}>🎉</div>
-        <h2 style={{ fontFamily: "'Pacifico', cursive", color: C.deep, fontSize: 28, marginBottom: 12 }}>Đặt hàng thành công!</h2>
+        <h2 style={{ fontFamily: "'Pacifico', cursive", color: C.deep, fontSize: isMobile ? 26 : 32, marginBottom: 12 }}>Đặt hàng thành công!</h2>
         <p style={{ color: C.textMid, marginBottom: 24 }}>Cảm ơn bạn đã tin tưởng Tiệm Bánh Sweet Moments. Chúng tôi sẽ liên hệ xác nhận đơn hàng trong vài phút.</p>
         <div style={{ background: C.pinkLight, borderRadius: 12, padding: 16, marginBottom: 24 }}>
           <div style={{ fontWeight: 700, color: C.deep }}>Mã đơn hàng: #ORD2026{String(Math.floor(Math.random() * 900 + 100))}</div>
           <div style={{ color: C.textMid, fontSize: 14, marginTop: 4 }}>Dự kiến giao: 2-4 giờ</div>
         </div>
+        {/* QR Code hiển thị SAU KHI xác nhận, chỉ cho Chuyển khoản / MoMo */}
+        {(form.payment === "transfer" || form.payment === "momo") && (
+          <div style={{ marginBottom: 24, padding: 20, background: C.cream, borderRadius: 16, border: `1px solid ${C.pinkMid}`, textAlign: "center" }}>
+            <div style={{ fontWeight: 700, color: C.deep, fontSize: 15, marginBottom: 12 }}>
+              {form.payment === "transfer" ? "💳 Quét mã QR để chuyển khoản" : "💜 Quét mã QR MoMo để thanh toán"}
+            </div>
+            {/* Mock QR Code Pattern - SVG */}
+            <div style={{ display: "inline-block", background: "white", padding: 16, borderRadius: 12, boxShadow: "0 2px 12px rgba(0,0,0,0.08)", marginBottom: 16 }}>
+              <svg width="160" height="160" viewBox="0 0 160 160" style={{ display: "block" }}>
+                <rect width="160" height="160" fill="white" />
+                <rect x="8" y="8" width="40" height="40" fill={form.payment === "momo" ? "#A50064" : C.deep} rx="4" />
+                <rect x="14" y="14" width="28" height="28" fill="white" rx="2" />
+                <rect x="20" y="20" width="16" height="16" fill={form.payment === "momo" ? "#A50064" : C.deep} rx="2" />
+                <rect x="112" y="8" width="40" height="40" fill={form.payment === "momo" ? "#A50064" : C.deep} rx="4" />
+                <rect x="118" y="14" width="28" height="28" fill="white" rx="2" />
+                <rect x="124" y="20" width="16" height="16" fill={form.payment === "momo" ? "#A50064" : C.deep} rx="2" />
+                <rect x="8" y="112" width="40" height="40" fill={form.payment === "momo" ? "#A50064" : C.deep} rx="4" />
+                <rect x="14" y="118" width="28" height="28" fill="white" rx="2" />
+                <rect x="20" y="124" width="16" height="16" fill={form.payment === "momo" ? "#A50064" : C.deep} rx="2" />
+                {[56,64,72,80,88,96].map(x => [8,16,24,32,56,64,72,80,88,96,112,120,128,136,144].map(y => (
+                  <rect key={`${x}-${y}`} x={x} y={y} width="6" height="6" fill={(x+y) % 16 === 0 ? "white" : (form.payment === "momo" ? "#A50064" : C.deep)} opacity={(x+y) % 3 === 0 ? 0 : 1} rx="1" />
+                )))}
+                {[8,16,24,32,40,56,64,72,80,88,96,104,112,120,128,136,144].map(x => [56,64,72,80,88,96,104].map(y => (
+                  <rect key={`b${x}-${y}`} x={x} y={y} width="6" height="6" fill={(x*y) % 16 < 8 ? (form.payment === "momo" ? "#A50064" : C.deep) : "white"} rx="1" />
+                )))}
+                <circle cx="80" cy="80" r="14" fill="white" />
+                <circle cx="80" cy="80" r="11" fill={form.payment === "momo" ? "#A50064" : C.accent} />
+                <text x="80" y="84" textAnchor="middle" fill="white" fontSize="12">{form.payment === "momo" ? "M" : "🎂"}</text>
+              </svg>
+            </div>
+            {/* Thông tin chuyển khoản */}
+            <div style={{ background: "white", borderRadius: 12, padding: 16, textAlign: "left", fontSize: 13, lineHeight: 1.8 }}>
+              {form.payment === "transfer" ? (
+                <>
+                  <div style={{ fontWeight: 700, color: C.deep, marginBottom: 8, fontSize: 14 }}>Thông tin chuyển khoản:</div>
+                  <div><span style={{ color: C.textMid }}>Ngân hàng:</span> <strong style={{ color: C.deepText }}>Vietcombank</strong></div>
+                  <div><span style={{ color: C.textMid }}>Số TK:</span> <strong style={{ color: C.deepText }}>1234 5678 9012</strong></div>
+                  <div><span style={{ color: C.textMid }}>Chủ TK:</span> <strong style={{ color: C.deepText }}>TIEM BANH SWEET MOMENTS</strong></div>
+                  <div><span style={{ color: C.textMid }}>Nội dung CK:</span> <strong style={{ color: C.accent }}>TIEMBANH {fmt(total)}</strong></div>
+                </>
+              ) : (
+                <>
+                  <div style={{ fontWeight: 700, color: "#A50064", marginBottom: 8, fontSize: 14 }}>Thanh toán qua MoMo:</div>
+                  <div><span style={{ color: C.textMid }}>Số điện thoại:</span> <strong style={{ color: C.deepText }}>0912 345 678</strong></div>
+                  <div><span style={{ color: C.textMid }}>Tên TK:</span> <strong style={{ color: C.deepText }}>Tiệm Bánh Sweet Moments</strong></div>
+                  <div><span style={{ color: C.textMid }}>Số tiền:</span> <strong style={{ color: "#A50064" }}>{fmt(total)}đ</strong></div>
+                </>
+              )}
+            </div>
+            <div style={{ marginTop: 12, fontSize: 12, color: C.textMid, fontStyle: "italic" }}>
+              ⏱ Đơn hàng sẽ được xác nhận sau khi nhận được thanh toán (1-5 phút)
+            </div>
+          </div>
+        )}
         <PillBtn onClick={() => { setCart([]); setPage("home"); }}>Về trang chủ</PillBtn>
       </Card>
     </div>
@@ -873,7 +954,7 @@ const CheckoutPage = ({ cart, setCart, setPage, user }) => {
   return (
     <div style={{ minHeight: "100vh", background: C.cream, paddingTop: 80 }}>
       <div style={{ background: C.deep, padding: isMobile ? "16px" : "20px 40px" }}>
-        <h2 style={{ color: "white", margin: 0, fontFamily: "'Pacifico', cursive", fontSize: isMobile ? 22 : 28 }}>Thanh Toán</h2>
+        <h2 style={{ color: "white", margin: 0, fontFamily: "'Pacifico', cursive", fontSize: isMobile ? 26 : 32 }}>Thanh Toán</h2>
       </div>
       <div style={{ maxWidth: 1100, margin: "0 auto", padding: isMobile ? "20px 16px" : "40px", display: "flex", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 20 : 32 }}>
         {/* Form */}
@@ -895,6 +976,7 @@ const CheckoutPage = ({ cart, setCart, setPage, user }) => {
                 </label>
               ))}
             </div>
+
             <PillBtn onClick={() => setStep(3)} style={{ width: "100%", justifyContent: "center" }}>Xác nhận đặt hàng 🎂</PillBtn>
           </Card>
         </div>
@@ -978,7 +1060,7 @@ const OrderDetailModal = ({ order, onClose }) => {
         <button onClick={onClose} style={{ position: "absolute", top: 12, right: 16, background: "none", border: "none", cursor: "pointer", fontSize: 22, color: C.textMid }}>✕</button>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
           <div>
-            <h2 style={{ fontFamily: "'Pacifico', cursive", color: C.deep, margin: "0 0 4px", fontSize: 24 }}>Chi tiết đơn hàng</h2>
+            <h2 style={{ fontFamily: "'Pacifico', cursive", color: C.deep, margin: "0 0 4px", fontSize: 28 }}>Chi tiết đơn hàng</h2>
             <span style={{ fontSize: 14, color: C.accent, fontWeight: 700 }}>{order.id}</span>
           </div>
           <StatusBadge status={order.status} />
@@ -1080,8 +1162,35 @@ const OrderHistoryPage = ({ user, setPage }) => {
   );
 };
 
-// ─── LOGIN MODAL ───────────────────────────────────────────────────────────────
-const LoginModal = ({ onClose, onLogin }) => {
+// ─── TOAST NOTIFICATION (UX cải thiện) ─────────────────────────────────────────
+const ToastNotification = ({ message, type = "success", onClose }) => {
+  const [visible, setVisible] = useState(true);
+  useEffect(() => {
+    const t = setTimeout(() => { setVisible(false); setTimeout(onClose, 300); }, 2500);
+    return () => clearTimeout(t);
+  }, [onClose]);
+  const icons = { success: "✅", error: "❌", info: "ℹ️", cart: "🛒" };
+  const bgs = { success: "#27ae60", error: "#e74c3c", info: C.accent, cart: C.deep };
+  return (
+    <div style={{
+      position: "fixed", top: 90, right: 24, zIndex: 9999,
+      background: bgs[type] || bgs.success, color: "white",
+      padding: "14px 24px", borderRadius: 14, fontWeight: 700, fontSize: 14,
+      boxShadow: "0 8px 32px rgba(0,0,0,0.18)",
+      display: "flex", alignItems: "center", gap: 10,
+      transform: visible ? "translateX(0)" : "translateX(120%)",
+      opacity: visible ? 1 : 0,
+      transition: "all 0.35s cubic-bezier(0.4, 0, 0.2, 1)",
+      maxWidth: 340,
+    }}>
+      <span style={{ fontSize: 18 }}>{icons[type]}</span>
+      <span>{message}</span>
+    </div>
+  );
+};
+
+// ─── LOGIN MODAL (cập nhật: thêm link Đăng ký & Quên mật khẩu) ────────────────
+const LoginModal = ({ onClose, onLogin, onSwitchToRegister, onSwitchToForgot }) => {
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
   const [err, setErr] = useState("");
@@ -1109,18 +1218,132 @@ const LoginModal = ({ onClose, onLogin }) => {
             style={{ width: "100%", padding: "12px 16px", borderRadius: 12, border: `1px solid ${C.pinkMid}`, fontSize: 14, fontFamily: "inherit", outline: "none", boxSizing: "border-box" }}
             onKeyDown={e => e.key === "Enter" && handleLogin()} />
         </div>
-        <div style={{ marginBottom: 20 }}>
+        <div style={{ marginBottom: 8 }}>
           <label style={{ fontSize: 12, fontWeight: 700, color: C.deepText, display: "block", marginBottom: 6, letterSpacing: "0.05em" }}>MẬT KHẨU</label>
           <input value={pass} onChange={e => setPass(e.target.value)} placeholder="••••••••" type="password"
             style={{ width: "100%", padding: "12px 16px", borderRadius: 12, border: `1px solid ${C.pinkMid}`, fontSize: 14, fontFamily: "inherit", outline: "none", boxSizing: "border-box" }}
             onKeyDown={e => e.key === "Enter" && handleLogin()} />
         </div>
+        {/* Link Quên mật khẩu */}
+        <div style={{ textAlign: "right", marginBottom: 16 }}>
+          <button onClick={onSwitchToForgot} style={{ background: "none", border: "none", cursor: "pointer", color: C.accent, fontSize: 13, fontWeight: 600, fontFamily: "inherit", padding: 0 }}>Quên mật khẩu?</button>
+        </div>
         {err && <div style={{ color: "#e74c3c", fontSize: 13, marginBottom: 12, textAlign: "center" }}>{err}</div>}
         <PillBtn onClick={handleLogin} style={{ width: "100%", justifyContent: "center" }}>Đăng nhập</PillBtn>
+        {/* Link Đăng ký */}
+        <div style={{ textAlign: "center", marginTop: 16, fontSize: 13, color: C.textMid }}>
+          Chưa có tài khoản?{" "}
+          <button onClick={onSwitchToRegister} style={{ background: "none", border: "none", cursor: "pointer", color: C.accent, fontSize: 13, fontWeight: 700, fontFamily: "inherit", padding: 0, textDecoration: "underline" }}>Đăng ký ngay</button>
+        </div>
         <div style={{ marginTop: 16, padding: "12px 16px", background: C.pinkLight, borderRadius: 10, fontSize: 12, color: C.textMid }}>
           <strong style={{ color: C.accent }}>Demo Admin:</strong> admin@tiembanh.vn / admin123<br />
           <strong style={{ color: C.accent }}>Demo KH:</strong> kh@gmail.com / 123456
         </div>
+      </Card>
+    </div>
+  );
+};
+
+// ─── REGISTER MODAL (mới) ──────────────────────────────────────────────────────
+const RegisterModal = ({ onClose, onLogin, onSwitchToLogin }) => {
+  const [form, setForm] = useState({ name: "", email: "", phone: "", pass: "", confirmPass: "" });
+  const [err, setErr] = useState("");
+  const [success, setSuccess] = useState(false);
+  const handleRegister = () => {
+    if (!form.name.trim()) { setErr("Vui lòng nhập họ tên!"); return; }
+    if (!form.email.includes("@")) { setErr("Email không hợp lệ!"); return; }
+    if (form.pass.length < 6) { setErr("Mật khẩu phải từ 6 ký tự!"); return; }
+    if (form.pass !== form.confirmPass) { setErr("Mật khẩu xác nhận không khớp!"); return; }
+    setSuccess(true);
+    setTimeout(() => {
+      onLogin({ name: form.name, role: "customer", email: form.email });
+    }, 1500);
+  };
+  if (success) return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 3000, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.45)", backdropFilter: "blur(8px)" }}>
+      <Card style={{ width: 420, padding: 40, textAlign: "center" }}>
+        <div style={{ fontSize: 64, marginBottom: 16 }}>🎉</div>
+        <h2 style={{ fontFamily: "'Pacifico', cursive", color: C.deep, margin: "0 0 8px" }}>Đăng ký thành công!</h2>
+        <p style={{ color: C.textMid, fontSize: 14 }}>Chào mừng bạn đến với Tiệm Bánh Sweet Moments</p>
+        <div style={{ width: 40, height: 40, margin: "16px auto", border: `3px solid ${C.accent}`, borderTop: "3px solid transparent", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
+      </Card>
+    </div>
+  );
+  const inputStyle = { width: "100%", padding: "12px 16px", borderRadius: 12, border: `1px solid ${C.pinkMid}`, fontSize: 14, fontFamily: "inherit", outline: "none", boxSizing: "border-box" };
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 3000, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.45)", backdropFilter: "blur(8px)" }}>
+      <Card style={{ width: 440, padding: 36, maxHeight: "90vh", overflowY: "auto" }}>
+        <button onClick={onClose} style={{ position: "absolute", top: 16, right: 16, background: "none", border: "none", cursor: "pointer", fontSize: 24, color: C.textMid }}>✕</button>
+        <div style={{ textAlign: "center", marginBottom: 24 }}>
+          <div style={{ fontSize: 48 }}>✨</div>
+          <h2 style={{ fontFamily: "'Pacifico', cursive", color: C.deep, margin: "8px 0 4px" }}>Đăng ký tài khoản</h2>
+          <p style={{ color: C.textMid, fontSize: 13, margin: 0 }}>Tạo tài khoản để nhận ưu đãi và tích điểm</p>
+        </div>
+        {[["name", "HỌ VÀ TÊN", "text", "Nguyễn Văn A"], ["email", "EMAIL", "email", "email@example.com"], ["phone", "SỐ ĐIỆN THOẠI", "tel", "0912 345 678"]].map(([key, label, type, ph]) => (
+          <div key={key} style={{ marginBottom: 12 }}>
+            <label style={{ fontSize: 12, fontWeight: 700, color: C.deepText, display: "block", marginBottom: 6, letterSpacing: "0.05em" }}>{label}</label>
+            <input type={type} value={form[key]} onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))} placeholder={ph} style={inputStyle} />
+          </div>
+        ))}
+        {[["pass", "MẬT KHẨU", "Tối thiểu 6 ký tự"], ["confirmPass", "XÁC NHẬN MẬT KHẨU", "Nhập lại mật khẩu"]].map(([key, label, ph]) => (
+          <div key={key} style={{ marginBottom: 12 }}>
+            <label style={{ fontSize: 12, fontWeight: 700, color: C.deepText, display: "block", marginBottom: 6, letterSpacing: "0.05em" }}>{label}</label>
+            <input type="password" value={form[key]} onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))} placeholder={ph} style={inputStyle}
+              onKeyDown={e => e.key === "Enter" && handleRegister()} />
+          </div>
+        ))}
+        {err && <div style={{ color: "#e74c3c", fontSize: 13, marginBottom: 12, textAlign: "center" }}>{err}</div>}
+        <PillBtn onClick={handleRegister} style={{ width: "100%", justifyContent: "center", marginTop: 4 }}>Đăng ký ✨</PillBtn>
+        <div style={{ textAlign: "center", marginTop: 16, fontSize: 13, color: C.textMid }}>
+          Đã có tài khoản?{" "}
+          <button onClick={onSwitchToLogin} style={{ background: "none", border: "none", cursor: "pointer", color: C.accent, fontSize: 13, fontWeight: 700, fontFamily: "inherit", padding: 0, textDecoration: "underline" }}>Đăng nhập</button>
+        </div>
+      </Card>
+    </div>
+  );
+};
+
+// ─── FORGOT PASSWORD MODAL (mới) ───────────────────────────────────────────────
+const ForgotPasswordModal = ({ onClose, onSwitchToLogin }) => {
+  const [email, setEmail] = useState("");
+  const [sent, setSent] = useState(false);
+  const [err, setErr] = useState("");
+  const handleSubmit = () => {
+    if (!email.includes("@")) { setErr("Vui lòng nhập email hợp lệ!"); return; }
+    setSent(true);
+  };
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 3000, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.45)", backdropFilter: "blur(8px)" }}>
+      <Card style={{ width: 420, padding: 40 }}>
+        <button onClick={onClose} style={{ position: "absolute", top: 16, right: 16, background: "none", border: "none", cursor: "pointer", fontSize: 24, color: C.textMid }}>✕</button>
+        <div style={{ textAlign: "center", marginBottom: 28 }}>
+          <div style={{ fontSize: 48 }}>{sent ? "📧" : "🔑"}</div>
+          <h2 style={{ fontFamily: "'Pacifico', cursive", color: C.deep, margin: "8px 0 4px" }}>{sent ? "Đã gửi email!" : "Quên mật khẩu"}</h2>
+          <p style={{ color: C.textMid, fontSize: 13, margin: 0 }}>{sent ? `Chúng tôi đã gửi link khôi phục đến ${email}` : "Nhập email đã đăng ký để nhận link khôi phục mật khẩu"}</p>
+        </div>
+        {sent ? (
+          <>
+            <div style={{ background: "#D4EDDA", color: "#155724", padding: "14px 18px", borderRadius: 12, fontSize: 13, lineHeight: 1.6, marginBottom: 20, textAlign: "center" }}>
+              ✅ Vui lòng kiểm tra hộp thư (bao gồm cả mục Spam). Link khôi phục có hiệu lực trong 30 phút.
+            </div>
+            <PillBtn onClick={onSwitchToLogin} style={{ width: "100%", justifyContent: "center" }}>← Quay lại đăng nhập</PillBtn>
+          </>
+        ) : (
+          <>
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ fontSize: 12, fontWeight: 700, color: C.deepText, display: "block", marginBottom: 6, letterSpacing: "0.05em" }}>EMAIL ĐÃ ĐĂNG KÝ</label>
+              <input value={email} onChange={e => setEmail(e.target.value)} placeholder="email@example.com" type="email"
+                style={{ width: "100%", padding: "12px 16px", borderRadius: 12, border: `1px solid ${C.pinkMid}`, fontSize: 14, fontFamily: "inherit", outline: "none", boxSizing: "border-box" }}
+                onKeyDown={e => e.key === "Enter" && handleSubmit()} />
+            </div>
+            {err && <div style={{ color: "#e74c3c", fontSize: 13, marginBottom: 12, textAlign: "center" }}>{err}</div>}
+            <PillBtn onClick={handleSubmit} style={{ width: "100%", justifyContent: "center" }}>Gửi link khôi phục 📧</PillBtn>
+            <div style={{ textAlign: "center", marginTop: 16, fontSize: 13, color: C.textMid }}>
+              Nhớ mật khẩu rồi?{" "}
+              <button onClick={onSwitchToLogin} style={{ background: "none", border: "none", cursor: "pointer", color: C.accent, fontSize: 13, fontWeight: 700, fontFamily: "inherit", padding: 0, textDecoration: "underline" }}>Đăng nhập</button>
+            </div>
+          </>
+        )}
       </Card>
     </div>
   );
@@ -1174,7 +1397,7 @@ const StatCard = ({ icon, label, value, sub, color }) => (
 
 const AdminDashboard = () => (
   <div>
-    <h1 style={{ fontFamily: "'Pacifico', cursive", color: C.deep, margin: "0 0 8px", fontSize: 30 }}>Tổng Quan</h1>
+    <h1 style={{ fontFamily: "'Pacifico', cursive", color: C.deep, margin: "0 0 8px", fontSize: 34 }}>Tổng Quan</h1>
     <p style={{ color: C.textMid, marginBottom: 32 }}>Hôm nay, 21/04/2026</p>
     {/* Stat Cards */}
     <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16, marginBottom: 32 }}>
@@ -1251,7 +1474,7 @@ const AdminOrders = () => {
   const updateStatus = (id, newStatus) => setOrders(os => os.map(o => o.id === id ? { ...o, status: newStatus } : o));
   return (
     <div>
-      <h1 style={{ fontFamily: "'Pacifico', cursive", color: C.deep, margin: "0 0 24px", fontSize: 30 }}>Quản Lý Đơn Hàng</h1>
+      <h1 style={{ fontFamily: "'Pacifico', cursive", color: C.deep, margin: "0 0 24px", fontSize: 34 }}>Quản Lý Đơn Hàng</h1>
       {/* Tabs */}
       <div style={{ display: "flex", gap: 8, marginBottom: 24, flexWrap: "wrap" }}>
         {[["all", "Tất cả"], ["pending", "Chờ xác nhận"], ["confirmed", "Đã xác nhận"], ["delivering", "Đang giao"], ["done", "Hoàn thành"], ["cancelled", "Đã hủy"]].map(([val, label]) => (
@@ -1593,7 +1816,7 @@ const AdminProducts = () => {
       )}
 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-        <h1 style={{ fontFamily: "'Pacifico', cursive", color: C.deep, margin: 0, fontSize: 30 }}>Quản Lý Sản Phẩm</h1>
+        <h1 style={{ fontFamily: "'Pacifico', cursive", color: C.deep, margin: 0, fontSize: 34 }}>Quản Lý Sản Phẩm</h1>
         <PillBtn onClick={() => setShowAdd(true)}>+ Thêm sản phẩm</PillBtn>
       </div>
 
@@ -1694,7 +1917,7 @@ const AdminProducts = () => {
 
 const AdminStats = () => (
   <div>
-    <h1 style={{ fontFamily: "'Pacifico', cursive", color: C.deep, margin: "0 0 24px", fontSize: 30 }}>Thống Kê Doanh Thu</h1>
+    <h1 style={{ fontFamily: "'Pacifico', cursive", color: C.deep, margin: "0 0 24px", fontSize: 34 }}>Thống Kê Doanh Thu</h1>
     <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16, marginBottom: 28 }}>
       <StatCard icon="💰" label="Doanh thu năm 2026" value="732tr" sub="▲ 18% so 2025" color={C.accent} />
       <StatCard icon="📦" label="Tổng đơn hàng" value="1.254" sub="Tỷ lệ hoàn thành 93%" />
@@ -1756,7 +1979,7 @@ const AdminCustomers = () => {
   const tierColor = { Gold: "#F5A623", Silver: "#95A5A6", Bronze: "#CD7F32" };
   return (
     <div>
-      <h1 style={{ fontFamily: "'Pacifico', cursive", color: C.deep, margin: "0 0 24px", fontSize: 30 }}>Quản Lý Khách Hàng</h1>
+      <h1 style={{ fontFamily: "'Pacifico', cursive", color: C.deep, margin: "0 0 24px", fontSize: 34 }}>Quản Lý Khách Hàng</h1>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16, marginBottom: 24 }}>
         <StatCard icon="👥" label="Tổng khách hàng" value="284" sub="▲ 18 người mới tháng này" />
         <StatCard icon="🥇" label="Khách VIP (Gold)" value="47" sub="16.5% tổng khách" />
@@ -1803,20 +2026,20 @@ const AboutPage = () => {
   return (
     <div style={{ minHeight: "100vh", paddingTop: 80 }}>
       <div style={{ background: C.deep, padding: isMobile ? "40px 20px" : "60px 40px", textAlign: "center" }}>
-        <h1 style={{ fontFamily: "'Pacifico', cursive", color: "white", fontSize: isMobile ? 32 : 48, margin: "0 0 12px" }}>Về Chúng Tôi</h1>
+        <h1 style={{ fontFamily: "'Pacifico', cursive", color: "white", fontSize: isMobile ? 36 : 52, margin: "0 0 12px" }}>Về Chúng Tôi</h1>
         <p style={{ color: C.textLightSoft, fontSize: isMobile ? 14 : 16 }}>5 năm tạo nên những khoảnh khắc ngọt ngào</p>
       </div>
       <div style={{ maxWidth: 1100, margin: "0 auto", padding: isMobile ? "32px 16px" : "60px 40px" }}>
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: isMobile ? 24 : 48, alignItems: "center", marginBottom: isMobile ? 32 : 64 }}>
           <div>
-            <h2 style={{ fontFamily: "'Pacifico', cursive", color: C.deep, fontSize: 36, marginBottom: 16 }}>Câu chuyện của chúng tôi</h2>
+            <h2 style={{ fontFamily: "'Pacifico', cursive", color: C.deep, fontSize: 40, marginBottom: 16 }}>Câu chuyện của chúng tôi</h2>
             <p style={{ color: C.textMid, lineHeight: 1.8, fontSize: 15, marginBottom: 16 }}>Ra đời năm 2021, Tiệm Bánh Sweet Moments được thành lập bởi tình yêu thuần túy với nghệ thuật làm bánh. Chúng tôi tin rằng mỗi chiếc bánh không chỉ là một món ăn — đó là một kỷ niệm, một cảm xúc, một tình yêu được gói gọn trong từng lớp kem mịn màng.</p>
             <p style={{ color: C.textMid, lineHeight: 1.8, fontSize: 15 }}>Với hơn 1.000 chiếc bánh đã được tạo ra, chúng tôi tự hào khi được đồng hành trong những khoảnh khắc đặc biệt nhất của khách hàng — từ sinh nhật đầu tiên của em bé đến lễ kỷ niệm của những đôi uyên ương.</p>
           </div>
           <div style={{ position: "relative" }}>
             <img src={CAKE_IMAGES[5]} alt="Story" style={{ width: "100%", borderRadius: 24, boxShadow: C.cardShadow }} />
             <div style={{ position: "absolute", bottom: -16, left: -16, background: C.white, borderRadius: 16, padding: 20, boxShadow: C.cardShadow, textAlign: "center" }}>
-              <div style={{ fontFamily: "'Pacifico', cursive", fontSize: 32, fontWeight: 900, color: C.accent }}>1000+</div>
+              <div style={{ fontFamily: "'Pacifico', cursive", fontSize: 36, fontWeight: 400, color: C.accent }}>1000+</div>
               <div style={{ fontSize: 12, color: C.textMid }}>Chiếc bánh đã làm</div>
             </div>
           </div>
@@ -1847,11 +2070,11 @@ const ContactPage = () => {
   return (
     <div style={{ minHeight: "100vh", paddingTop: 80, background: C.cream }}>
       <div style={{ background: C.deep, padding: isMobile ? "24px 16px" : "40px 40px" }}>
-        <h1 style={{ fontFamily: "'Pacifico', cursive", color: "white", fontSize: isMobile ? 28 : 40, margin: 0 }}>Liên Hệ</h1>
+        <h1 style={{ fontFamily: "'Pacifico', cursive", color: "white", fontSize: isMobile ? 32 : 44, margin: 0 }}>Liên Hệ</h1>
       </div>
       <div style={{ maxWidth: 1100, margin: "0 auto", padding: isMobile ? "32px 16px" : "60px 40px", display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1.2fr", gap: isMobile ? 24 : 48 }}>
         <div>
-          <h2 style={{ fontFamily: "'Pacifico', cursive", color: C.deep, fontSize: isMobile ? 22 : 28, marginBottom: 20 }}>Thông tin liên hệ</h2>
+          <h2 style={{ fontFamily: "'Pacifico', cursive", color: C.deep, fontSize: isMobile ? 26 : 32, marginBottom: 20 }}>Thông tin liên hệ</h2>
           {[["📍", "Địa chỉ", "123 Đường Bánh Ngọt, Quận Cầu Giấy, Hà Nội"], ["📞", "Điện thoại", "0912 345 678 (8:00 – 21:00)"], ["✉️", "Email", "hello@tiembanh.vn"], ["⏰", "Giờ mở cửa", "Thứ 2 – Chủ Nhật: 8:00 – 21:00"]].map(([icon, label, val]) => (
             <div key={label} style={{ display: "flex", gap: 16, marginBottom: 20 }}>
               <div style={{ width: 48, height: 48, borderRadius: "50%", background: C.pinkLight, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0 }}>{icon}</div>
@@ -1913,22 +2136,50 @@ export default function App() {
   const [cart, setCart] = useState([]);
   const [user, setUser] = useState(null);
   const [showLogin, setShowLogin] = useState(false);
+  const [showRegister, setShowRegister] = useState(false); // NEW: Đăng ký
+  const [showForgot, setShowForgot] = useState(false);     // NEW: Quên mật khẩu
   const [showCart, setShowCart] = useState(false);
   const [viewProduct, setViewProduct] = useState(null);
   const [adminPage, setAdminPage] = useState("admin-dashboard");
+  const [toasts, setToasts] = useState([]);                 // NEW: Toast notifications
+
+  // NEW: Hàm hiển thị toast
+  const showToast = (message, type = "success") => {
+    const id = Date.now();
+    setToasts(t => [...t, { id, message, type }]);
+  };
+  const removeToast = (id) => setToasts(t => t.filter(x => x.id !== id));
 
   const addToCart = (product) => {
     setCart(c => {
       const ex = c.find(i => i.id === product.id);
       return ex ? c.map(i => i.id === product.id ? { ...i, qty: i.qty + 1 } : i) : [...c, { ...product, qty: 1 }];
     });
+    showToast(`Đã thêm "${product.name}" vào giỏ!`, "cart"); // NEW: toast khi thêm giỏ hàng
+  };
+
+  // NEW: Hàm "Mua ngay" từ product card
+  const handleBuyNow = (product) => {
+    setCart(c => {
+      const ex = c.find(i => i.id === product.id);
+      return ex ? c.map(i => i.id === product.id ? { ...i, qty: i.qty + 1 } : i) : [...c, { ...product, qty: 1 }];
+    });
+    setPage("checkout");
   };
 
   const handleLogin = (u) => {
     setUser(u);
     setShowLogin(false);
+    setShowRegister(false);
+    setShowForgot(false);
     if (u.role === "admin") setPage("admin-dashboard");
   };
+
+  // NEW: Chuyển đổi giữa các modal auth
+  const switchToRegister = () => { setShowLogin(false); setShowForgot(false); setShowRegister(true); };
+  const switchToLogin = () => { setShowRegister(false); setShowForgot(false); setShowLogin(true); };
+  const switchToForgot = () => { setShowLogin(false); setShowRegister(false); setShowForgot(true); };
+  const closeAllAuth = () => { setShowLogin(false); setShowRegister(false); setShowForgot(false); };
 
   const cartCount = cart.reduce((s, i) => s + i.qty, 0);
   const isAdmin = user?.role === "admin" && (page.startsWith("admin"));
@@ -1966,23 +2217,27 @@ export default function App() {
       {page === "home" && <>
         <HeroSection setPage={setPage} />
         <CategorySection setPage={setPage} setActiveCat={setActiveCat} />
-        <ProductGrid title="Sản Phẩm Mới Nhất" subtitle="Những chiếc bánh tươi ngon vừa ra lò" products={PRODUCTS.slice(0, 6)} addToCart={addToCart} setPage={setPage} setViewProduct={setViewProduct} />
-        <HotSection products={PRODUCTS.filter(p => p.tags.includes("Hot") || p.tags.includes("Bestseller")).slice(0, 6)} addToCart={addToCart} setPage={setPage} setViewProduct={setViewProduct} />
+        <ProductGrid title="Sản Phẩm Mới Nhất" subtitle="Những chiếc bánh tươi ngon vừa ra lò" products={PRODUCTS.slice(0, 6)} addToCart={addToCart} setPage={setPage} setViewProduct={setViewProduct} handleBuyNow={handleBuyNow} />
+        <HotSection products={PRODUCTS.filter(p => p.tags.includes("Hot") || p.tags.includes("Bestseller")).slice(0, 6)} addToCart={addToCart} setPage={setPage} setViewProduct={setViewProduct} handleBuyNow={handleBuyNow} />
         <HowToOrderSection />
         <ReviewSection />
         <Footer setPage={setPage} />
       </>}
-      {page === "menu" && <MenuPage activeCat={activeCat} setActiveCat={setActiveCat} addToCart={addToCart} setPage={setPage} setViewProduct={setViewProduct} />}
+      {page === "menu" && <MenuPage activeCat={activeCat} setActiveCat={setActiveCat} addToCart={addToCart} setPage={setPage} setViewProduct={setViewProduct} handleBuyNow={handleBuyNow} />}
       {page === "product" && <ProductPage product={viewProduct} addToCart={addToCart} setPage={setPage} setCart={setCart} />}
       {page === "about" && <AboutPage />}
       {page === "contact" && <ContactPage />}
-      {page === "guide" && <div style={{ minHeight: "100vh", paddingTop: 80, background: C.cream }}><div style={{ background: C.deep, padding: "40px 40px", textAlign: "center" }}><h1 style={{ fontFamily: "'Pacifico', cursive", color: "white", fontSize: 40, margin: "0 0 8px" }}>Hướng Dẫn Đặt Bánh</h1><p style={{ color: C.textLightSoft, fontSize: 15, margin: 0 }}>4 bước đơn giản để có chiếc bánh hoàn hảo</p></div><HowToOrderSection /></div>}
+      {page === "guide" && <div style={{ minHeight: "100vh", paddingTop: 80, background: C.cream }}><div style={{ background: C.deep, padding: "40px 40px", textAlign: "center" }}><h1 style={{ fontFamily: "'Pacifico', cursive", color: "white", fontSize: 44, margin: "0 0 8px" }}>Hướng Dẫn Đặt Bánh</h1><p style={{ color: C.textLightSoft, fontSize: 19, margin: 0 }}>4 bước đơn giản để có chiếc bánh hoàn hảo</p></div><HowToOrderSection /></div>}
       {page === "checkout" && <CheckoutPage cart={cart} setCart={setCart} setPage={setPage} user={user} />}
       {page === "orders" && <OrderHistoryPage user={user} setPage={setPage} />}
 
       {showCart && <CartSidebar cart={cart} setCart={setCart} onClose={() => setShowCart(false)} setPage={setPage} user={user} />}
-      {showLogin && <LoginModal onClose={() => setShowLogin(false)} onLogin={handleLogin} />}
+      {showLogin && <LoginModal onClose={closeAllAuth} onLogin={handleLogin} onSwitchToRegister={switchToRegister} onSwitchToForgot={switchToForgot} />}
+      {showRegister && <RegisterModal onClose={closeAllAuth} onLogin={handleLogin} onSwitchToLogin={switchToLogin} />}
+      {showForgot && <ForgotPasswordModal onClose={closeAllAuth} onSwitchToLogin={switchToLogin} />}
       <FloatingCartBtn count={cartCount} onClick={() => setShowCart(true)} />
+      {/* NEW: Toast notifications */}
+      {toasts.map(t => <ToastNotification key={t.id} message={t.message} type={t.type} onClose={() => removeToast(t.id)} />)}
     </div>
   );
 }
