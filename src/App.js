@@ -738,6 +738,8 @@ const ProductPage = ({ product, addToCart, setPage, setCart }) => {
   const [selSize, setSelSize] = useState("16cm");
   const [selFlavor, setSelFlavor] = useState("Vanilla");
   const [activeImg, setActiveImg] = useState(0);
+  const [cakeMessage, setCakeMessage] = useState("");
+  const CAKE_MSG_MAX = 50;
   const sizes = [{ size: "14cm", price: product?.price, servings: "1-2 người" }, { size: "16cm", price: product?.price, servings: "3-4 người" }, { size: "18cm", price: product?.price, servings: "5-6 người" }];
   const flavors = ["Vanilla", "Matcha", "Socola", "Dâu Tây", "Chanh Dây"];
   if (!product) return null;
@@ -800,6 +802,30 @@ const ProductPage = ({ product, addToCart, setPage, setCart }) => {
             </div>
           </div>
 
+          {/* Nội dung ghi trên bánh */}
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+              <div style={{ fontWeight: 700, color: C.deepText, fontSize: 15, display: "flex", alignItems: "center", gap: 6 }}>✍️ Nội dung ghi trên bánh</div>
+              <span style={{ fontSize: 12, color: cakeMessage.length >= CAKE_MSG_MAX ? "#e74c3c" : C.textMid, fontWeight: 600 }}>{cakeMessage.length}/{CAKE_MSG_MAX}</span>
+            </div>
+            <textarea
+              value={cakeMessage}
+              onChange={e => { if (e.target.value.length <= CAKE_MSG_MAX) setCakeMessage(e.target.value); }}
+              placeholder='VD: "Chúc mừng sinh nhật Lan Anh 🎂"'
+              rows={3}
+              style={{
+                width: "100%", padding: "12px 16px", borderRadius: 14,
+                border: `2px solid ${cakeMessage.length >= CAKE_MSG_MAX ? "#e74c3c" : C.pinkMid}`,
+                fontSize: 14, fontFamily: "inherit", outline: "none", resize: "none",
+                boxSizing: "border-box", background: C.white, color: C.deepText,
+                transition: "border-color 0.2s",
+              }}
+              onFocus={e => { e.target.style.borderColor = C.accent; }}
+              onBlur={e => { e.target.style.borderColor = cakeMessage.length >= CAKE_MSG_MAX ? "#e74c3c" : C.pinkMid; }}
+            />
+            <div style={{ fontSize: 12, color: C.textMid, marginTop: 6, fontStyle: "italic" }}>💡 Để trống nếu không cần ghi chữ lên bánh</div>
+          </div>
+
           {/* Qty */}
           <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 28 }}>
             <div style={{ fontWeight: 700, color: C.deepText, fontSize: 15 }}>Số lượng</div>
@@ -811,8 +837,8 @@ const ProductPage = ({ product, addToCart, setPage, setCart }) => {
           </div>
 
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-            <PillBtn onClick={() => { for (let i = 0; i < qty; i++) addToCart(product); }}>🛒 Thêm vào giỏ hàng</PillBtn>
-            <PillBtn variant="success" onClick={() => { setCart([{ ...product, qty }]); setPage("checkout"); }} style={{ background: `linear-gradient(135deg, #D4639A, #8B3A6B)`, boxShadow: "0 4px 16px rgba(139,58,107,0.35)" }}>⚡ Mua ngay</PillBtn>
+            <PillBtn onClick={() => { for (let i = 0; i < qty; i++) addToCart({ ...product, cakeMessage }); }}>🛒 Thêm vào giỏ hàng</PillBtn>
+            <PillBtn variant="success" onClick={() => { setCart([{ ...product, qty, cakeMessage }]); setPage("checkout"); }} style={{ background: `linear-gradient(135deg, #D4639A, #8B3A6B)`, boxShadow: "0 4px 16px rgba(139,58,107,0.35)" }}>⚡ Mua ngay</PillBtn>
           </div>
 
           {/* Trust */}
@@ -852,6 +878,7 @@ const CartSidebar = ({ cart, setCart, onClose, setPage, user }) => {
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 700, fontSize: 14, color: C.deepText, marginBottom: 4 }}>{item.name}</div>
                 <div style={{ color: C.accent, fontWeight: 800, fontSize: 15 }}>{item.price}đ</div>
+                {item.cakeMessage && <div style={{ fontSize: 11, color: C.deep, marginTop: 4, padding: "4px 8px", background: C.pinkLight, borderRadius: 6, fontStyle: "italic" }}>✍️ "{item.cakeMessage}"</div>}
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6 }}>
                   <button onClick={() => setCart(c => c.map(i => i.id === item.id ? { ...i, qty: Math.max(1, i.qty - 1) } : i))} style={{ width: 24, height: 24, borderRadius: "50%", border: `1px solid ${C.pinkMid}`, background: "white", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, color: C.accent }}>−</button>
                   <span style={{ fontWeight: 700, fontSize: 14 }}>{item.qty}</span>
@@ -877,12 +904,73 @@ const CartSidebar = ({ cart, setCart, onClose, setPage, user }) => {
 };
 
 // ─── CHECKOUT PAGE ─────────────────────────────────────────────────────────────
-const CheckoutPage = ({ cart, setCart, setPage, user }) => {
+// Mock voucher codes
+const VOUCHERS = [
+  { code: "SWEET10", discount: 10, type: "percent", maxDiscount: 50000, expiry: "2026-12-31", desc: "Giảm 10% (tối đa 50k)" },
+  { code: "CAKE50K", discount: 50000, type: "fixed", expiry: "2026-12-31", desc: "Giảm 50.000đ" },
+  { code: "NEWBIE20", discount: 20, type: "percent", maxDiscount: 100000, expiry: "2026-06-30", desc: "Giảm 20% (tối đa 100k)" },
+  { code: "EXPIRED01", discount: 10, type: "percent", maxDiscount: 30000, expiry: "2025-01-01", desc: "Đã hết hạn" },
+];
+
+const CheckoutPage = ({ cart, setCart, setPage, user, showToast }) => {
   const isMobile = useIsMobile();
   const [step, setStep] = useState(1);
   const [form, setForm] = useState({ name: user?.name || "", phone: "", address: "", note: "", payment: "transfer" });
-  const total = cart.reduce((s, i) => s + parseInt(i.price.replace(/\./g, "")) * i.qty, 0);
+  const subtotal = cart.reduce((s, i) => s + parseInt(i.price.replace(/\./g, "")) * i.qty, 0);
   const fmt = n => n.toLocaleString("vi-VN");
+
+  // Voucher state
+  const [voucherCode, setVoucherCode] = useState("");
+  const [appliedVoucher, setAppliedVoucher] = useState(null);
+  const [voucherError, setVoucherError] = useState("");
+
+  // Points state
+  const USER_POINTS = user ? 320 : 0;
+  const POINT_VALUE = 1000; // 1 point = 1000đ
+  const [usePoints, setUsePoints] = useState(false);
+  const [pointsToUse, setPointsToUse] = useState(0);
+
+  // Order notes
+  const [orderNotes, setOrderNotes] = useState("");
+
+  // Calculate discount from voucher
+  const voucherDiscount = appliedVoucher
+    ? appliedVoucher.type === "percent"
+      ? Math.min(Math.floor(subtotal * appliedVoucher.discount / 100), appliedVoucher.maxDiscount)
+      : appliedVoucher.discount
+    : 0;
+
+  // Calculate points discount
+  const pointsDiscount = usePoints ? pointsToUse * POINT_VALUE : 0;
+
+  // Final total
+  const totalDiscount = voucherDiscount + pointsDiscount;
+  const total = Math.max(0, subtotal - totalDiscount);
+
+  // Apply voucher
+  const handleApplyVoucher = () => {
+    setVoucherError("");
+    if (!voucherCode.trim()) { setVoucherError("Vui lòng nhập mã giảm giá"); return; }
+    const found = VOUCHERS.find(v => v.code.toUpperCase() === voucherCode.trim().toUpperCase());
+    if (!found) {
+      setVoucherError("Mã giảm giá không tồn tại!");
+      if (showToast) showToast("Mã giảm giá không tồn tại!", "error");
+      return;
+    }
+    if (new Date(found.expiry) < new Date()) {
+      setVoucherError("Mã giảm giá đã hết hạn!");
+      if (showToast) showToast("Mã giảm giá đã hết hạn!", "error");
+      return;
+    }
+    setAppliedVoucher(found);
+    if (showToast) showToast(`Áp dụng mã "${found.code}" thành công!`, "success");
+  };
+
+  const handleRemoveVoucher = () => {
+    setAppliedVoucher(null);
+    setVoucherCode("");
+    setVoucherError("");
+  };
   if (step === 3) return (
     <div style={{ minHeight: "100vh", background: C.cream, paddingTop: 80, display: "flex", alignItems: "center", justifyContent: "center" }}>
       <Card style={{ padding: isMobile ? 32 : 48, textAlign: "center", maxWidth: 520 }}>
@@ -977,6 +1065,69 @@ const CheckoutPage = ({ cart, setCart, setPage, user }) => {
               ))}
             </div>
 
+            {/* ── Voucher / Mã giảm giá ── */}
+            <div style={{ marginBottom: 20, padding: 20, background: C.cream, borderRadius: 14, border: `1px solid ${C.pinkMid}` }}>
+              <div style={{ fontWeight: 700, color: C.deep, fontSize: 14, marginBottom: 12, display: "flex", alignItems: "center", gap: 6 }}>🏷️ Mã giảm giá</div>
+              {appliedVoucher ? (
+                <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "#E8F8E8", borderRadius: 10, border: "1px solid #27ae60" }}>
+                  <span style={{ fontSize: 18 }}>✅</span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 700, color: "#155724", fontSize: 13 }}>{appliedVoucher.code}</div>
+                    <div style={{ fontSize: 12, color: "#27ae60" }}>{appliedVoucher.desc} · Giảm {fmt(voucherDiscount)}đ</div>
+                  </div>
+                  <button onClick={handleRemoveVoucher} style={{ background: "none", border: "none", cursor: "pointer", color: "#e74c3c", fontSize: 13, fontWeight: 700, fontFamily: "inherit" }}>Xóa</button>
+                </div>
+              ) : (
+                <>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <input value={voucherCode} onChange={e => { setVoucherCode(e.target.value.toUpperCase()); setVoucherError(""); }}
+                      placeholder="Nhập mã giảm giá..."
+                      onKeyDown={e => e.key === "Enter" && handleApplyVoucher()}
+                      style={{ flex: 1, padding: "10px 14px", borderRadius: 10, border: `1px solid ${voucherError ? "#e74c3c" : C.pinkMid}`, fontSize: 14, fontFamily: "inherit", outline: "none", boxSizing: "border-box", letterSpacing: "0.08em", fontWeight: 600 }} />
+                    <PillBtn small onClick={handleApplyVoucher}>Áp dụng</PillBtn>
+                  </div>
+                  {voucherError && <div style={{ color: "#e74c3c", fontSize: 12, marginTop: 8, fontWeight: 600 }}>❌ {voucherError}</div>}
+                  <div style={{ fontSize: 11, color: C.textMid, marginTop: 8 }}>💡 Thử: <strong>SWEET10</strong>, <strong>CAKE50K</strong>, <strong>NEWBIE20</strong></div>
+                </>
+              )}
+            </div>
+
+            {/* ── Điểm tích lũy ── */}
+            {user && USER_POINTS > 0 && (
+              <div style={{ marginBottom: 20, padding: 20, background: C.cream, borderRadius: 14, border: `1px solid ${C.pinkMid}` }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                  <div style={{ fontWeight: 700, color: C.deep, fontSize: 14, display: "flex", alignItems: "center", gap: 6 }}>⭐ Điểm tích lũy</div>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: C.accent, background: C.pinkLight, padding: "3px 12px", borderRadius: 20 }}>{USER_POINTS} điểm</span>
+                </div>
+                <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", marginBottom: usePoints ? 12 : 0 }}>
+                  <input type="checkbox" checked={usePoints} onChange={e => { setUsePoints(e.target.checked); if (!e.target.checked) setPointsToUse(0); else setPointsToUse(Math.min(USER_POINTS, Math.floor(subtotal / POINT_VALUE))); }}
+                    style={{ width: 18, height: 18, accentColor: C.accent }} />
+                  <span style={{ fontSize: 13, color: C.deepText, fontWeight: 600 }}>Sử dụng điểm tích lũy (1 điểm = {fmt(POINT_VALUE)}đ)</span>
+                </label>
+                {usePoints && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <input type="range" min={0} max={Math.min(USER_POINTS, Math.floor(subtotal / POINT_VALUE))} value={pointsToUse}
+                      onChange={e => setPointsToUse(parseInt(e.target.value))}
+                      style={{ flex: 1, accentColor: C.accent }} />
+                    <span style={{ fontSize: 14, fontWeight: 800, color: C.accent, minWidth: 90, textAlign: "right" }}>-{fmt(pointsDiscount)}đ</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── Ghi chú đơn hàng ── */}
+            <div style={{ marginBottom: 24 }}>
+              <label style={{ fontSize: 13, fontWeight: 700, color: C.deepText, marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>📝 Ghi chú cho cửa hàng</label>
+              <textarea value={orderNotes} onChange={e => setOrderNotes(e.target.value)}
+                placeholder='VD: "Giao hàng giờ hành chính", "Không lấy nến", "Giao trước 15h"...'
+                rows={3}
+                style={{ width: "100%", padding: "12px 16px", borderRadius: 14, border: `1px solid ${C.pinkMid}`, fontSize: 14, fontFamily: "inherit", outline: "none", resize: "vertical", boxSizing: "border-box", background: C.white, color: C.deepText, transition: "border-color 0.2s" }}
+                onFocus={e => { e.target.style.borderColor = C.accent; }}
+                onBlur={e => { e.target.style.borderColor = C.pinkMid; }}
+              />
+              <div style={{ fontSize: 11, color: C.textMid, marginTop: 4 }}>Ghi chú sẽ được gửi đến cửa hàng cùng đơn hàng của bạn</div>
+            </div>
+
             <PillBtn onClick={() => setStep(3)} style={{ width: "100%", justifyContent: "center" }}>Xác nhận đặt hàng 🎂</PillBtn>
           </Card>
         </div>
@@ -990,17 +1141,43 @@ const CheckoutPage = ({ cart, setCart, setPage, user }) => {
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 13, fontWeight: 700, color: C.deepText }}>{item.name}</div>
                   <div style={{ fontSize: 12, color: C.textMid }}>x{item.qty}</div>
+                  {item.cakeMessage && <div style={{ fontSize: 10, color: C.deep, marginTop: 2, fontStyle: "italic" }}>✍️ {item.cakeMessage}</div>}
                 </div>
                 <div style={{ fontWeight: 700, color: C.accent, fontSize: 14 }}>{fmt(parseInt(item.price.replace(/\./g, "")) * item.qty)}đ</div>
               </div>
             ))}
-            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, fontSize: 14 }}>
+              <span style={{ color: C.textMid }}>Tạm tính</span>
+              <span style={{ fontWeight: 700, color: C.deepText }}>{fmt(subtotal)}đ</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6, fontSize: 14 }}>
               <span style={{ color: C.textMid }}>Phí giao hàng</span>
               <span style={{ color: "#27ae60", fontWeight: 700 }}>Miễn phí</span>
             </div>
+            {voucherDiscount > 0 && (
+              <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6, fontSize: 14 }}>
+                <span style={{ color: "#27ae60" }}>🏷️ Voucher ({appliedVoucher.code})</span>
+                <span style={{ color: "#27ae60", fontWeight: 700 }}>-{fmt(voucherDiscount)}đ</span>
+              </div>
+            )}
+            {pointsDiscount > 0 && (
+              <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6, fontSize: 14 }}>
+                <span style={{ color: "#27ae60" }}>⭐ Điểm ({pointsToUse} pt)</span>
+                <span style={{ color: "#27ae60", fontWeight: 700 }}>-{fmt(pointsDiscount)}đ</span>
+              </div>
+            )}
+            {totalDiscount > 0 && (
+              <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, padding: "6px 10px", background: "#E8F8E8", borderRadius: 8, fontSize: 13 }}>
+                <span style={{ color: "#155724", fontWeight: 700 }}>💰 Tiết kiệm</span>
+                <span style={{ color: "#27ae60", fontWeight: 800 }}>-{fmt(totalDiscount)}đ</span>
+              </div>
+            )}
             <div style={{ display: "flex", justifyContent: "space-between", marginTop: 12, paddingTop: 12, borderTop: `2px solid ${C.pink}` }}>
               <span style={{ fontWeight: 800, color: C.deep, fontSize: 16 }}>Tổng cộng</span>
-              <span style={{ fontWeight: 900, color: C.accent, fontSize: 20 }}>{fmt(total)}đ</span>
+              <div style={{ textAlign: "right" }}>
+                {totalDiscount > 0 && <div style={{ fontSize: 13, color: C.textMid, textDecoration: "line-through" }}>{fmt(subtotal)}đ</div>}
+                <span style={{ fontWeight: 900, color: C.accent, fontSize: 20 }}>{fmt(total)}đ</span>
+              </div>
             </div>
           </Card>
         </div>
@@ -2228,7 +2405,7 @@ export default function App() {
       {page === "about" && <AboutPage />}
       {page === "contact" && <ContactPage />}
       {page === "guide" && <div style={{ minHeight: "100vh", paddingTop: 80, background: C.cream }}><div style={{ background: C.deep, padding: "40px 40px", textAlign: "center" }}><h1 style={{ fontFamily: "'Pacifico', cursive", color: "white", fontSize: 44, margin: "0 0 8px" }}>Hướng Dẫn Đặt Bánh</h1><p style={{ color: C.textLightSoft, fontSize: 19, margin: 0 }}>4 bước đơn giản để có chiếc bánh hoàn hảo</p></div><HowToOrderSection /></div>}
-      {page === "checkout" && <CheckoutPage cart={cart} setCart={setCart} setPage={setPage} user={user} />}
+      {page === "checkout" && <CheckoutPage cart={cart} setCart={setCart} setPage={setPage} user={user} showToast={showToast} />}
       {page === "orders" && <OrderHistoryPage user={user} setPage={setPage} />}
 
       {showCart && <CartSidebar cart={cart} setCart={setCart} onClose={() => setShowCart(false)} setPage={setPage} user={user} />}
